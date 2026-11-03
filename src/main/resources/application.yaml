@@ -1,0 +1,27 @@
+spring:
+  application:
+    name: mana-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: America/Lima
+  flyway:
+    enabled: false
+server:
+  port: ${SERVER_PORT:8080}
+app:
+  zona-horaria: America/Lima
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+logging:
+  level:
+    pe.edu.upeu.mana: INFO

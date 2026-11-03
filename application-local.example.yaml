@@ -1,0 +1,10 @@
+# Copiar a application-local.yaml (ignorado por Git) y completar por entorno
+# o reemplazar los placeholders únicamente en ese archivo local.
+spring:
+  datasource:
+    password: ${DB_PASSWORD}
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  admin:
+    password: ${MANA_ADMIN_PASSWORD:}
