@@ -25,6 +25,12 @@ import pe.edu.upeu.mana.service.service.ContextoLocalService;
 
 @ExtendWith(MockitoExtension.class)
 class CajaServiceImplTest {
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.EnumSource(value=RolUsuario.class,names={"ADMINISTRADOR","DUENO"})
+    void supervisorPuedeCerrarLaCajaDeOtroUsuario(RolUsuario rol) {
+        usuario(rol,3L);
+        assertNotNull(service.cerrar(10L,new CerrarCajaRequestDTO(List.of(),null)).getCierre());
+    }
 
     @Mock
     SesionCajaRepository cajas;
@@ -119,8 +125,8 @@ class CajaServiceImplTest {
     }
 
     @Test
-    void duenoNoPuedeCerrarLaCajaDeOtroUsuario() {
-        usuario(RolUsuario.DUENO, 3L);
+    void cajeroNoPuedeCerrarLaCajaDeOtroUsuario() {
+        usuario(RolUsuario.CAJERO, 3L);
         assertThrows(AccessDeniedException.class, () -> service.cerrar(10L, new CerrarCajaRequestDTO(List.of(), null)));
         verifyNoInteractions(detalles);
     }

@@ -74,7 +74,7 @@ for(const [path,operations]of Object.entries(api.paths).sort(([a],[b])=>a.locale
  if(path==='/api/health')response='Backend funcionando correctamente';
  if(path==='/api/v1/auth/login' && response){
   const permisoSrc=fs.readFileSync('src/main/java/pe/edu/upeu/mana/enums/Permiso.java','utf8');
-  response.tipo='Bearer';response.expiraEnSegundos=3600;response.rol='ADMINISTRADOR';response.nombreCompleto='Administrador MANÁ';
+  response.tipo='Bearer';response.expiraEnSegundos=3600;response.rol='DUENO';response.nombreCompleto='Dueño MANÁ';
   response.permisos=permisoSrc.slice(permisoSrc.indexOf('{')+1,permisoSrc.lastIndexOf('}')).match(/\b[A-Z][A-Z_]+\b/g)||[];
  }
  if(response && typeof response==='object' && !Array.isArray(response) && response.contenido){response.pagina=0;response.tamanio=20;response.totalElementos=response.contenido.length;response.totalPaginas=1;response.ultima=true;}

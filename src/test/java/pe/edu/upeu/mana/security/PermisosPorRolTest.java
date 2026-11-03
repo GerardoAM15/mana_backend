@@ -8,13 +8,13 @@ import pe.edu.upeu.mana.enums.Permiso;
 class PermisosPorRolTest {
 
     @Test
-    void administradorTieneTodosLosPermisos() {
-        assertEquals(Arrays.stream(Permiso.values()).map(Enum::name).sorted().toList(), PermisosPorRol.permisos("ADMINISTRADOR"));
+    void duenoTieneTodosLosPermisos() {
+        assertEquals(Arrays.stream(Permiso.values()).map(Enum::name).sorted().toList(), PermisosPorRol.permisos("DUENO"));
     }
 
     @Test
-    void duenoSupervisaSinRegistrarContratosNiVentas() {
-        assertEquals(java.util.Set.of("CLIENTE_LEER", "CONTRATO_LEER", "CAJA_OPERAR", "CAJA_SUPERVISAR", "MENU_LEER", "PLAN_GESTIONAR", "CALENDARIO_GESTIONAR", "INVENTARIO_GESTIONAR", "GASTO_GESTIONAR", "REPORTE_VER"), java.util.Set.copyOf(PermisosPorRol.permisos("DUENO")));
+    void administradorTieneTodosExceptoGestionarLocales() {
+        assertEquals(Arrays.stream(Permiso.values()).filter(p -> p != Permiso.LOCAL_GESTIONAR).map(Enum::name).sorted().toList(), PermisosPorRol.permisos("ADMINISTRADOR"));
     }
 
     @Test

@@ -37,4 +37,7 @@ public class UsuarioResponseDTO {
     private Boolean activo;
 
     private Long version;
+
+    @io.swagger.v3.oas.annotations.media.Schema(description = "Permite editar este usuario según la jerarquía del usuario autenticado. No habilita cambiar el rol propio ni desactivar la propia cuenta.")
+    private boolean gestionable;
 }

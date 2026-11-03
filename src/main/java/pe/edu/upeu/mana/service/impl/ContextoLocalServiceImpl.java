@@ -1,6 +1,6 @@
 package pe.edu.upeu.mana.service.impl;
 
-import pe.edu.upeu.mana.enums.RolUsuario;
+import pe.edu.upeu.mana.security.PermisosPorRol;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -47,7 +47,7 @@ public class ContextoLocalServiceImpl implements ContextoLocalService {
             var e = empleados.findById(u.getEmpleadoId()).orElseThrow(() -> new BadCredentialsException("Empleado inválido"));
             if (filtro == null)
                 return e.getLocalId();
-            if (u.getRol() != RolUsuario.ADMINISTRADOR && !filtro.equals(e.getLocalId()))
+            if (!PermisosPorRol.esAdministradorODueno(u.getRol()) && !filtro.equals(e.getLocalId()))
                 throw new AccessDeniedException("El local no corresponde al usuario");
             return filtro;
         } finally {
@@ -61,7 +61,7 @@ public class ContextoLocalServiceImpl implements ContextoLocalService {
         log.info("Inicio ContextoLocalServiceImpl.validarLocal");
         try {
             var u = usuario();
-            if (u.getRol() != RolUsuario.ADMINISTRADOR && !localId.equals(localId(null)))
+            if (!PermisosPorRol.esAdministradorODueno(u.getRol()) && !localId.equals(localId(null)))
                 throw new AccessDeniedException("El local no corresponde al usuario");
         } finally {
             log.info("Fin ContextoLocalServiceImpl.validarLocal | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);

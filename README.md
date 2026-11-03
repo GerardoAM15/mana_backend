@@ -16,7 +16,7 @@ java -jar target/mana-backend-1.0.0.jar
 
 En Linux/macOS: `./mvnw clean package` y `./mvnw spring-boot:run`. Si la configuración local de Maven apunta a una caché sin permisos, puede indicarse `-Dmaven.repo.local=<directorio-escribible>` sin modificar el proyecto.
 
-Antes de arrancar, configurar `DB_PASSWORD` y `JWT_SECRET` y, para crear el primer administrador, `MANA_ADMIN_PASSWORD`. El repositorio no incluye contraseñas ni secretos JWT de desarrollo. Como alternativa local, copiar `application-local.example.yaml` a `application-local.yaml` en esta carpeta y completar sus valores. Este último archivo está ignorado por Git y el perfil `dev` lo importa opcionalmente. Las variables de un archivo `.env` no se cargan automáticamente en Spring.
+Antes de arrancar, configurar `DB_PASSWORD` y `JWT_SECRET` y, para crear el primer dueño, `MANA_ADMIN_PASSWORD`. El repositorio no incluye contraseñas ni secretos JWT de desarrollo. Como alternativa local, copiar `application-local.example.yaml` a `application-local.yaml` en esta carpeta y completar sus valores. Este último archivo está ignorado por Git y el perfil `dev` lo importa opcionalmente. Las variables de un archivo `.env` no se cargan automáticamente en Spring.
 
 Perfil predeterminado: `dev`. Oracle: `jdbc:oracle:thin:@//localhost:1521/xepdb1`. API: `http://localhost:8080/api/v1`. Swagger: [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html). Health público, como PharmaSoft: `GET /api/health`, respuesta `Backend funcionando correctamente`. Health verifica el proceso HTTP; no reemplaza una prueba de conexión a Oracle.
 
@@ -33,8 +33,8 @@ Perfil predeterminado: `dev`. Oracle: `jdbc:oracle:thin:@//localhost:1521/xepdb1
 | `CORS_ORIGINS` | Orígenes permitidos separados por coma | `http://localhost:4200` |
 | `APP_ZONA_HORARIA` | Zona del `Clock` | `America/Lima`; configurar ese mismo valor en producción |
 | `APP_FRONTEND_URL` | Base del enlace de recuperación | `http://localhost:4200` |
-| `MANA_ADMIN_EMAIL` | Correo del primer administrador | `admin@mana.pe` |
-| `MANA_ADMIN_PASSWORD` | Clave del primer administrador | Configurar por entorno o en `application-local.yaml` |
+| `MANA_ADMIN_EMAIL` | Correo del primer dueño | `admin@mana.pe` |
+| `MANA_ADMIN_PASSWORD` | Clave del primer dueño | Configurar por entorno o en `application-local.yaml` |
 | `MANA_ADMIN_DNI` | DNI de ocho dígitos | `00000001` |
 | `SPRING_MAIL_HOST`, `SPRING_MAIL_PORT` | Servidor SMTP | Sin SMTP por defecto |
 | `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | Credenciales SMTP | Sin valores |
@@ -44,9 +44,9 @@ Perfil predeterminado: `dev`. Oracle: `jdbc:oracle:thin:@//localhost:1521/xepdb1
 
 `prod` exige credenciales de BD y JWT por entorno y no importa el archivo local del perfil `dev`. Para personalizar SMTP también pueden proporcionarse las propiedades estándar de Spring Mail mediante configuración externa. En desarrollo sin SMTP, la recuperación escribe el enlace en el log, según el requisito del proyecto; en los demás perfiles no escribe el token.
 
-## Primer administrador y autenticación
+## Primer dueño y autenticación
 
-Al arrancar, si no existe ningún usuario `ADMINISTRADOR`, el bootstrap crea persona, empleado y usuario en el primer local activo. Usa `app.admin.email`, `app.admin.password` y `app.admin.dni`, alimentados por las variables anteriores. Si faltan valores, avisa y no crea nada. Si DNI o correo ya están en uso, avisa y no duplica registros. Un administrador existente no recibe cambios automáticos de clave.
+Al arrancar, si no existe ningún usuario `DUENO`, `AdministradorBootstrap` crea persona, empleado y usuario con rol `DUENO` en el primer local activo. Conserva las propiedades `app.admin.email`, `app.admin.password` y `app.admin.dni` y las variables `MANA_ADMIN_*`. Si faltan valores, avisa y no crea nada. Si DNI o correo ya están en uso, avisa y no duplica registros. Los usuarios existentes conservan su rol y contraseña: si el administrador inicial ya existe y aún no hay dueño, configure una identidad libre en `MANA_ADMIN_EMAIL` y `MANA_ADMIN_DNI` para crear al primer dueño.
 
 ```http
 POST /api/v1/auth/login
@@ -61,22 +61,24 @@ El login devuelve `token`, `tipo`, `expiraEnSegundos`, `usuarioId`, `nombreCompl
 
 ## Permisos
 
-| Permiso | ADMINISTRADOR | DUENO | CAJERO |
+Jerarquía: **DUENO > ADMINISTRADOR > CAJERO**. El dueño tiene todos los permisos; el administrador tiene todos excepto `LOCAL_GESTIONAR`.
+
+| Permiso | DUENO | ADMINISTRADOR | CAJERO |
 |---|:---:|:---:|:---:|
-| USUARIO_GESTIONAR | ✓ | | |
+| USUARIO_GESTIONAR | ✓ | ✓ | |
 | LOCAL_GESTIONAR | ✓ | | |
 | CLIENTE_LEER | ✓ | ✓ | ✓ |
-| CLIENTE_ESCRIBIR | ✓ | | ✓ |
+| CLIENTE_ESCRIBIR | ✓ | ✓ | ✓ |
 | CONTRATO_LEER | ✓ | ✓ | ✓ |
-| CONTRATO_REGISTRAR | ✓ | | |
-| CONTRATO_ANULAR | ✓ | | |
-| CONSUMO_REGISTRAR | ✓ | | ✓ |
-| CONSUMO_ANULAR | ✓ | | |
-| VENTA_REGISTRAR | ✓ | | ✓ |
-| VENTA_ANULAR | ✓ | | |
+| CONTRATO_REGISTRAR | ✓ | ✓ | |
+| CONTRATO_ANULAR | ✓ | ✓ | |
+| CONSUMO_REGISTRAR | ✓ | ✓ | ✓ |
+| CONSUMO_ANULAR | ✓ | ✓ | |
+| VENTA_REGISTRAR | ✓ | ✓ | ✓ |
+| VENTA_ANULAR | ✓ | ✓ | |
 | CAJA_OPERAR | ✓ | ✓ | ✓ |
 | CAJA_SUPERVISAR | ✓ | ✓ | |
-| MENU_GESTIONAR | ✓ | | |
+| MENU_GESTIONAR | ✓ | ✓ | |
 | MENU_LEER | ✓ | ✓ | ✓ |
 | PLAN_GESTIONAR | ✓ | ✓ | |
 | CALENDARIO_GESTIONAR | ✓ | ✓ | |
@@ -84,7 +86,11 @@ El login devuelve `token`, `tipo`, `expiraEnSegundos`, `usuarioId`, `nombreCompl
 | GASTO_GESTIONAR | ✓ | ✓ | |
 | REPORTE_VER | ✓ | ✓ | |
 
-La identidad determina el local operativo a partir del empleado. Los filtros `localId` de otras sedes se permiten únicamente al administrador. Las lecturas, reportes y escrituras comprueban ese alcance. El dueño puede supervisar cajas de su local, pero únicamente el propietario de la caja o un administrador puede cerrarla.
+La identidad determina el local operativo a partir del empleado. Los filtros `localId` de otras sedes se permiten a `DUENO` y `ADMINISTRADOR`. Las lecturas, reportes y escrituras comprueban ese alcance. El propietario de la caja, un `ADMINISTRADOR` o un `DUENO` pueden cerrarla; los dos últimos también pueden cobrar y anular ventas de otras cajas.
+
+Un `ADMINISTRADOR` solo crea, edita, desactiva y cambia el rol de usuarios `CAJERO`, y únicamente puede asignar `CAJERO`. Un `DUENO` gestiona todos los roles. Una operación fuera de esa jerarquía devuelve 403: `No tiene permiso para gestionar este usuario`. `UsuarioResponseDTO.gestionable` indica si la jerarquía permite editar al usuario; un dueño puede editar su propio perfil, pero nadie puede cambiarse el rol ni desactivarse a sí mismo. El frontend debe mantener esas dos acciones deshabilitadas para la propia cuenta.
+
+Desactivar al último dueño activo o quitarle el rol `DUENO`, tanto por edición como por los endpoints específicos, devuelve 409: `Debe existir al menos un dueño activo`. Esta protección tiene prioridad si también se trata de la propia cuenta. Las operaciones de gestión y el bootstrap comparten un bloqueo del rol `DUENO` antes de bloquear al usuario, para que dos peticiones concurrentes no eliminen al último dueño.
 
 ## Arquitectura vigente
 
@@ -136,7 +142,7 @@ Página, tamaño, dirección o campo de ordenación fuera de la lista permitida 
 - Toda tarifa, precio de combo, suelto y bebida se lee de la BD. D: líquido + dos panes; A: entrada + segundo + refresco; C: segundo + refresco, según `componentes_regla`. Para consumos debe existir una regla activa inequívoca por servicio.
 - Al crear, actualizar o activar una regla de cobro se permite como máximo un menú activo por servicio. Un conflicto devuelve 409: `Ya existe un menú activo para ese servicio; desactívelo primero`. Las reglas inactivas pueden coexistir y editar la propia regla activa no se considera duplicado.
 - Una línea COMBO describe la composición de una unidad; su `cantidad` multiplica esa elección. Las bebidas de inventario no llevan recargo. Platos y combos deben estar programados hoy. Las bebidas descuentan stock al registrar, aun si la venta está pendiente.
-- Cobrar exige venta pendiente, caja original abierta y pagos por el total exacto. Cobrar y anular solo se permiten al propietario de esa caja o a un ADMINISTRADOR; otro usuario recibe 403. Anular repone bebidas y devuelve cada pago si la venta estaba pagada.
+- Cobrar exige venta pendiente, caja original abierta y pagos por el total exacto. Cobrar y anular solo se permiten al propietario de esa caja, a un ADMINISTRADOR o a un DUENO; otro usuario recibe 403. Anular repone bebidas y devuelve cada pago si la venta estaba pagada.
 - Una caja abierta por usuario. El cierre rechaza ventas pendientes y guarda arqueo por método, incluso cuando los movimientos suman cero. Métodos omitidos en `conteos` equivalen a contado cero; los repetidos se rechazan.
 - **Esperado** = monto inicial solo en EFECTIVO + cobros de ventas − devoluciones de ventas + cobros de contratos − devoluciones de contratos + recargos de consumos no anulados. El esperado puede ser negativo, tanto por método como en total; el contado nunca es negativo. `diferencia = contado − esperado`.
 - **Devoluciones en EFECTIVO de contratos o ventas**: el efectivo esperado actual, incluido el monto inicial, debe cubrir el total a devolver. Si no, 409: `No hay efectivo suficiente en caja para la devolución`. No hay límite equivalente para otros métodos.
@@ -161,7 +167,7 @@ $env:MANA_ORACLE_TEST='true'
 Remove-Item Env:MANA_ORACLE_TEST
 ```
 
-Los tests de integración de negocio usan transacciones que revierten los datos de prueba. Como cualquier arranque, el contexto puede crear el primer administrador y actualizar estados vencidos mediante el bootstrap/scheduler. La conexión real valida todas las entidades; se prueban raciones, superposición, renovaciones, consumo doble, saldo, menú, caja, devoluciones, totales, compras, kardex, reportes, JWT, permisos, errores HTTP y paginación. SMTP requiere configuración externa y no se prueba con correos reales.
+Los tests de integración de negocio usan transacciones que revierten los datos de prueba. Como cualquier arranque, el contexto puede crear el primer dueño y actualizar estados vencidos mediante el bootstrap/scheduler. La conexión real valida todas las entidades; se prueban raciones, superposición, renovaciones, consumo doble, saldo, menú, caja, devoluciones, totales, compras, kardex, reportes, JWT, jerarquía de roles, gestión de usuarios, protección del último dueño, errores HTTP y paginación. SMTP requiere configuración externa y no se prueba con correos reales.
 
 El test HTTP exporta `target/openapi.json`. [docs/openapi.json](docs/openapi.json) es una instantánea generada del contrato real. Tras cambiar endpoints, ejecutar la integración y luego `node tools/generar-api.mjs` para actualizar la documentación y la colección; Node se utiliza solo para esa generación, no para ejecutar la API.
 

@@ -39,8 +39,8 @@ Respuesta 200:
   "tipo": "Bearer",
   "expiraEnSegundos": 3600,
   "usuarioId": 1,
-  "nombreCompleto": "Administrador MANÁ",
-  "rol": "ADMINISTRADOR",
+  "nombreCompleto": "Dueño MANÁ",
+  "rol": "DUENO",
   "localId": 1,
   "localNombre": "Ejemplo",
   "permisos": [
@@ -3075,7 +3075,8 @@ Respuesta 200:
     "correo": "admin@mana.pe",
     "rol": "ADMINISTRADOR",
     "activo": true,
-    "version": 1
+    "version": 1,
+    "gestionable": true
   }
 ]
 ```
@@ -3119,7 +3120,8 @@ Respuesta 200:
   "correo": "admin@mana.pe",
   "rol": "ADMINISTRADOR",
   "activo": true,
-  "version": 1
+  "version": 1,
+  "gestionable": true
 }
 ```
 
@@ -3149,7 +3151,8 @@ Respuesta 200:
   "correo": "admin@mana.pe",
   "rol": "ADMINISTRADOR",
   "activo": true,
-  "version": 1
+  "version": 1,
+  "gestionable": true
 }
 ```
 
@@ -3194,7 +3197,8 @@ Respuesta 200:
   "correo": "admin@mana.pe",
   "rol": "ADMINISTRADOR",
   "activo": true,
-  "version": 1
+  "version": 1,
+  "gestionable": true
 }
 ```
 
@@ -3246,7 +3250,8 @@ Respuesta 200:
   "correo": "admin@mana.pe",
   "rol": "ADMINISTRADOR",
   "activo": true,
-  "version": 1
+  "version": 1,
+  "gestionable": true
 }
 ```
 

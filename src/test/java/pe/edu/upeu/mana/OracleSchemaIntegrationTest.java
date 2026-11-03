@@ -21,6 +21,7 @@ class OracleSchemaIntegrationTest {
         assertEquals(200,respuesta.statusCode());
         assertTrue(mapper.readTree(respuesta.body()).get("paths").has("/api/v1/ventas"));
         var contrato=mapper.readTree(respuesta.body());
+        assertEquals("boolean", contrato.get("components").get("schemas").get("UsuarioResponseDTO").get("properties").get("gestionable").get("type").asText());
         assertFalse(contrato.get("components").get("schemas").get("LineaVentaRequestDTO").get("properties").has("formaValida"));
         boolean tieneQ=false;
         for(var parametro:contrato.get("paths").get("/api/v1/clientes").get("get").get("parameters")) {
@@ -73,11 +74,21 @@ class OracleSchemaIntegrationTest {
         var datos = mapper.readTree(login.body());
         assertEquals("Bearer", datos.get("tipo").asText());
         assertTrue(datos.has("permisos"));
+        var esperados = pe.edu.upeu.mana.security.PermisosPorRol.permisos(datos.get("rol").asText());
+        assertEquals(esperados, mapper.convertValue(datos.get("permisos"), new tools.jackson.core.type.TypeReference<java.util.List<String>>() {}));
         assertFalse(datos.has("claveHash"));
         var me = enviar("GET", "/auth/me", null, datos.get("token").asText());
         assertEquals(200, me.statusCode());
         assertFalse(mapper.readTree(me.body()).has("token"));
-        for (String ruta : java.util.List.of("/catalogos", "/clientes", "/usuarios", "/locales", "/platos", "/tarifas", "/planes", "/reglas-cobro", "/precios-sueltos", "/dias-no-atencion", "/menus")) {
+        var rolPropio = enviar("PATCH", "/usuarios/" + datos.get("usuarioId").asLong() + "/rol",
+                Map.of("rol", datos.get("rol").asText()), datos.get("token").asText());
+        assertEquals(403, rolPropio.statusCode());
+        assertEquals("No tiene permiso para gestionar este usuario", mapper.readTree(rolPropio.body()).get("message").asText());
+        var propio = enviar("GET", "/usuarios/" + datos.get("usuarioId").asLong(), null, datos.get("token").asText());
+        assertEquals(200, propio.statusCode());
+        assertEquals(datos.get("rol").asText().equals("DUENO"), mapper.readTree(propio.body()).get("gestionable").asBoolean());
+        assertEquals(datos.get("rol").asText().equals("DUENO") ? 200 : 403, enviar("GET", "/locales", null, datos.get("token").asText()).statusCode());
+        for (String ruta : java.util.List.of("/catalogos", "/clientes", "/usuarios", "/platos", "/tarifas", "/planes", "/reglas-cobro", "/precios-sueltos", "/dias-no-atencion", "/menus")) {
             assertEquals(200, enviar("GET", ruta, null, datos.get("token").asText()).statusCode(), ruta);
         }
         var recuperar = enviar("POST", "/auth/recuperar", Map.of("correo", "no-existe@example.invalid"), null);

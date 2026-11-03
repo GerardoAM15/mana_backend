@@ -329,7 +329,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"token\": \"<JWT>\",\n  \"tipo\": \"Bearer\",\n  \"expiraEnSegundos\": 3600,\n  \"usuarioId\": 1,\n  \"nombreCompleto\": \"Administrador MANÁ\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"permisos\": [\n    \"USUARIO_GESTIONAR\",\n    \"LOCAL_GESTIONAR\",\n    \"CLIENTE_LEER\",\n    \"CLIENTE_ESCRIBIR\",\n    \"CONTRATO_LEER\",\n    \"CONTRATO_REGISTRAR\",\n    \"CONTRATO_ANULAR\",\n    \"CONSUMO_REGISTRAR\",\n    \"CONSUMO_ANULAR\",\n    \"VENTA_REGISTRAR\",\n    \"VENTA_ANULAR\",\n    \"CAJA_OPERAR\",\n    \"CAJA_SUPERVISAR\",\n    \"MENU_GESTIONAR\",\n    \"MENU_LEER\",\n    \"PLAN_GESTIONAR\",\n    \"CALENDARIO_GESTIONAR\",\n    \"INVENTARIO_GESTIONAR\",\n    \"GASTO_GESTIONAR\",\n    \"REPORTE_VER\"\n  ]\n}"
+              "body": "{\n  \"token\": \"<JWT>\",\n  \"tipo\": \"Bearer\",\n  \"expiraEnSegundos\": 3600,\n  \"usuarioId\": 1,\n  \"nombreCompleto\": \"Dueño MANÁ\",\n  \"rol\": \"DUENO\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"permisos\": [\n    \"USUARIO_GESTIONAR\",\n    \"LOCAL_GESTIONAR\",\n    \"CLIENTE_LEER\",\n    \"CLIENTE_ESCRIBIR\",\n    \"CONTRATO_LEER\",\n    \"CONTRATO_REGISTRAR\",\n    \"CONTRATO_ANULAR\",\n    \"CONSUMO_REGISTRAR\",\n    \"CONSUMO_ANULAR\",\n    \"VENTA_REGISTRAR\",\n    \"VENTA_ANULAR\",\n    \"CAJA_OPERAR\",\n    \"CAJA_SUPERVISAR\",\n    \"MENU_GESTIONAR\",\n    \"MENU_LEER\",\n    \"PLAN_GESTIONAR\",\n    \"CALENDARIO_GESTIONAR\",\n    \"INVENTARIO_GESTIONAR\",\n    \"GASTO_GESTIONAR\",\n    \"REPORTE_VER\"\n  ]\n}"
             }
           ],
           "event": [
@@ -8047,7 +8047,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "[\n  {\n    \"id\": 1,\n    \"empleadoId\": 1,\n    \"dni\": \"87654321\",\n    \"nombre\": \"Ejemplo\",\n    \"apellido\": \"Pérez\",\n    \"telefono\": \"999999999\",\n    \"localId\": 1,\n    \"localNombre\": \"Ejemplo\",\n    \"cargo\": \"Ejemplo\",\n    \"correo\": \"admin@mana.pe\",\n    \"rol\": \"ADMINISTRADOR\",\n    \"activo\": true,\n    \"version\": 1\n  }\n]"
+              "body": "[\n  {\n    \"id\": 1,\n    \"empleadoId\": 1,\n    \"dni\": \"87654321\",\n    \"nombre\": \"Ejemplo\",\n    \"apellido\": \"Pérez\",\n    \"telefono\": \"999999999\",\n    \"localId\": 1,\n    \"localNombre\": \"Ejemplo\",\n    \"cargo\": \"Ejemplo\",\n    \"correo\": \"admin@mana.pe\",\n    \"rol\": \"ADMINISTRADOR\",\n    \"activo\": true,\n    \"version\": 1,\n    \"gestionable\": true\n  }\n]"
             }
           ],
           "event": [
@@ -8137,7 +8137,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1\n}"
+              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1,\n  \"gestionable\": true\n}"
             }
           ],
           "event": [
@@ -8202,7 +8202,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1\n}"
+              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1,\n  \"gestionable\": true\n}"
             }
           ],
           "event": [
@@ -8294,7 +8294,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1\n}"
+              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1,\n  \"gestionable\": true\n}"
             }
           ],
           "event": [
@@ -8452,7 +8452,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1\n}"
+              "body": "{\n  \"id\": 1,\n  \"empleadoId\": 1,\n  \"dni\": \"87654321\",\n  \"nombre\": \"Ejemplo\",\n  \"apellido\": \"Pérez\",\n  \"telefono\": \"999999999\",\n  \"localId\": 1,\n  \"localNombre\": \"Ejemplo\",\n  \"cargo\": \"Ejemplo\",\n  \"correo\": \"admin@mana.pe\",\n  \"rol\": \"ADMINISTRADOR\",\n  \"activo\": true,\n  \"version\": 1,\n  \"gestionable\": true\n}"
             }
           ],
           "event": [

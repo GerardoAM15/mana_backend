@@ -130,8 +130,8 @@ public class CajaServiceImpl implements CajaService {
             var caja = cajas.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Caja no encontrada"));
             contexto.validarLocal(caja.getLocalId());
             var usuario = contexto.usuario();
-            if (!caja.getUsuarioId().equals(usuario.getId()) && usuario.getRol() != RolUsuario.ADMINISTRADOR)
-                throw new AccessDeniedException("Solo el dueño de la caja o un administrador puede cerrarla");
+            if (!caja.getUsuarioId().equals(usuario.getId()) && !PermisosPorRol.esAdministradorODueno(usuario.getRol()))
+                throw new AccessDeniedException("Solo el dueño de la caja, un administrador o un DUENO puede cerrarla");
             exigirAbierta(caja);
             if (ventas.existsByCajaIdAndEstado(id, pe.edu.upeu.mana.enums.EstadoVenta.PENDIENTE))
                 throw new ReglaNegocioException("No se puede cerrar la caja con ventas pendientes");

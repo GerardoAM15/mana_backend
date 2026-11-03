@@ -51,6 +51,31 @@ import pe.edu.upeu.mana.enums.TipoPagoContrato;
 @Transactional
 class PensionesOracleIntegrationTest {
     @Autowired pe.edu.upeu.mana.service.service.ClienteService clientesService;
+    @Autowired UsuarioService usuariosService;
+
+    @Test
+    void gestionDeUsuariosBloqueaRolesYCuentaDuenosEnOracle() {
+        var actor = usuarios.findByCorreoIgnoreCase(SecurityContextHolder.getContext().getAuthentication().getName()).orElseThrow();
+        actor.setRol(RolUsuario.DUENO);
+        usuarios.flush();
+        long anteriores = usuarios.countByRolAndActivoTrue(RolUsuario.DUENO);
+        var creado = usuariosService.crear(new pe.edu.upeu.mana.dto.usuario.UsuarioRequestDTO(
+                dni(), "Dueño", "Prueba", null, localId, "Dueño", "dueno-" + UUID.randomUUID() + "@example.invalid",
+                "ClaveSoloParaTest1", RolUsuario.DUENO, true));
+        assertTrue(creado.isGestionable());
+        assertEquals(anteriores + 1, usuarios.countByRolAndActivoTrue(RolUsuario.DUENO));
+        assertTrue(usuariosService.buscar(actor.getId()).isGestionable());
+        var editado = usuariosService.cambiarRol(creado.getId(), new pe.edu.upeu.mana.dto.usuario.RolRequestDTO(RolUsuario.ADMINISTRADOR));
+        assertEquals(RolUsuario.ADMINISTRADOR, editado.getRol());
+        assertEquals(1L, usuarios.findById(creado.getId()).orElseThrow().getTokenVersion());
+        assertEquals(anteriores, usuarios.countByRolAndActivoTrue(RolUsuario.DUENO));
+        actor.setRol(RolUsuario.ADMINISTRADOR);
+        usuarios.flush();
+        assertFalse(usuariosService.buscar(creado.getId()).isGestionable());
+        assertEquals("No tiene permiso para gestionar este usuario",
+                assertThrows(org.springframework.security.access.AccessDeniedException.class,
+                        () -> usuariosService.eliminar(creado.getId())).getMessage());
+    }
 
     @Test
     void clientesBuscanDniExactoNombreOApellidoSinDistinguirMayusculasYPaginan() {

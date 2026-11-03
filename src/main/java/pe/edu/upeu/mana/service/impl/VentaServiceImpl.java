@@ -5,6 +5,7 @@ import java.time.*;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.*;
+import pe.edu.upeu.mana.security.PermisosPorRol;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.access.AccessDeniedException;
@@ -300,8 +301,8 @@ public class VentaServiceImpl implements VentaService {
         var cajaId = ventas.buscarCajaId(id).orElseThrow(() -> new RecursoNoEncontradoException("Venta no encontrada"));
         var caja = cajas.buscarAbiertaParaActualizar(cajaId);
         var usuario = contexto.usuario();
-        if (!Objects.equals(caja.getUsuarioId(), usuario.getId()) && usuario.getRol() != RolUsuario.ADMINISTRADOR)
-            throw new AccessDeniedException("Solo el dueño de la caja o un administrador puede operar la venta");
+        if (!Objects.equals(caja.getUsuarioId(), usuario.getId()) && !PermisosPorRol.esAdministradorODueno(usuario.getRol()))
+            throw new AccessDeniedException("Solo el dueño de la caja, un administrador o un DUENO puede operar la venta");
     }
 
     @Transactional(readOnly = true)

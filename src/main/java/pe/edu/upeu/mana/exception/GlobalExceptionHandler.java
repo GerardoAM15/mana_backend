@@ -85,7 +85,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AccessDeniedException.class)
     ResponseEntity<ErrorResponseDTO> denegado(AccessDeniedException ex, HttpServletRequest req) {
-        return error(HttpStatus.FORBIDDEN, "No tiene permiso para esta operacion", req);
+        String mensaje = "No tiene permiso para gestionar este usuario".equals(ex.getMessage())
+                ? ex.getMessage() : "No tiene permiso para esta operacion";
+        return error(HttpStatus.FORBIDDEN, mensaje, req);
     }
 
     @ExceptionHandler(Exception.class)

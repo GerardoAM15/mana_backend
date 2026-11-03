@@ -93,7 +93,7 @@ class VentaServiceImplTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = RolUsuario.class, names = {"CAJERO", "DUENO"})
+    @EnumSource(value = RolUsuario.class, names = {"CAJERO"})
     void cobrarCajaAjenaRechazaAntesDeModificarLaVenta(RolUsuario rol) {
         cajaYUsuario(rol, 3L);
 
@@ -104,7 +104,7 @@ class VentaServiceImplTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = RolUsuario.class, names = {"CAJERO", "DUENO"})
+    @EnumSource(value = RolUsuario.class, names = {"CAJERO"})
     void anularCajaAjenaRechazaAntesDeDevolverDineroOStock(RolUsuario rol) {
         cajaYUsuario(rol, 3L);
 
@@ -115,9 +115,9 @@ class VentaServiceImplTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = RolUsuario.class, names = {"CAJERO", "ADMINISTRADOR"})
+    @EnumSource(value = RolUsuario.class, names = {"CAJERO", "ADMINISTRADOR", "DUENO"})
     void propietarioOAdministradorPuedeCobrar(RolUsuario rol) {
-        cajaYUsuario(rol, rol == RolUsuario.ADMINISTRADOR ? 3L : 2L);
+        cajaYUsuario(rol, rol == RolUsuario.CAJERO ? 2L : 3L);
         var venta = ventaPendiente();
         reloj();
 
@@ -128,9 +128,9 @@ class VentaServiceImplTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = RolUsuario.class, names = {"CAJERO", "ADMINISTRADOR"})
+    @EnumSource(value = RolUsuario.class, names = {"CAJERO", "ADMINISTRADOR", "DUENO"})
     void propietarioOAdministradorPuedeAnular(RolUsuario rol) {
-        cajaYUsuario(rol, rol == RolUsuario.ADMINISTRADOR ? 3L : 2L);
+        cajaYUsuario(rol, rol == RolUsuario.CAJERO ? 2L : 3L);
         var venta = ventaPendiente();
         reloj();
 
