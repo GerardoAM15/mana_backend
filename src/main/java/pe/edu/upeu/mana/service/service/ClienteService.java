@@ -14,7 +14,7 @@ public interface ClienteService {
 
     ClienteResponseDTO buscar(Long id);
 
-    PaginaResponseDTO<ClienteResponseDTO> listar(int pagina, int tamanio, String ordenarPor, String direccion);
+    PaginaResponseDTO<ClienteResponseDTO> listar(String q, int pagina, int tamanio, String ordenarPor, String direccion);
 
     void eliminar(Long id);
 }

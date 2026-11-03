@@ -2437,6 +2437,14 @@
         "operationId": "listar_15",
         "parameters": [
           {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "pagina",
             "in": "query",
             "required": false,
@@ -4638,9 +4646,6 @@
             },
             "maxItems": 50,
             "minItems": 0
-          },
-          "formaValida": {
-            "type": "boolean"
           }
         },
         "required": [

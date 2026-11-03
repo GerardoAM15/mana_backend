@@ -1,6 +1,7 @@
 package pe.edu.upeu.mana.service.impl;
 
 import java.util.List;
+import java.util.Locale;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.data.domain.Sort;
@@ -75,12 +76,16 @@ public class ClienteServiceImpl implements ClienteService {
     }
 
     @Transactional(readOnly = true)
-    public PaginaResponseDTO<ClienteResponseDTO> listar(int pagina, int tamanio, String ordenarPor, String direccion) {
+    public PaginaResponseDTO<ClienteResponseDTO> listar(String q, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
         log.info("Inicio ClienteServiceImpl.listar");
         try {
             var pageable = PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
-            return PaginaResponseDTO.de(repository.findAll(pageable).map(mapper::toResponse));
+            if (q == null || q.isBlank())
+                return PaginaResponseDTO.de(repository.findAll(pageable).map(mapper::toResponse));
+            String busqueda = q.trim();
+            String texto = "%" + busqueda.toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
+            return PaginaResponseDTO.de(repository.filtrar(busqueda, texto, pageable).map(mapper::toResponse));
         } finally {
             log.info("Fin ClienteServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }

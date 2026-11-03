@@ -36,8 +36,8 @@ public class ClienteController {
     }
 
     @GetMapping
-    public PaginaResponseDTO<ClienteResponseDTO> listar(@RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "20") int tamanio, @RequestParam(defaultValue = "id") String ordenarPor, @RequestParam(defaultValue = "desc") String direccion) {
-        return service.listar(pagina, tamanio, ordenarPor, direccion);
+    public PaginaResponseDTO<ClienteResponseDTO> listar(@RequestParam(required = false) String q, @RequestParam(defaultValue = "0") int pagina, @RequestParam(defaultValue = "20") int tamanio, @RequestParam(defaultValue = "id") String ordenarPor, @RequestParam(defaultValue = "desc") String direccion) {
+        return service.listar(q, pagina, tamanio, ordenarPor, direccion);
     }
 
     @DeleteMapping("/{id}")

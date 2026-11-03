@@ -52,11 +52,58 @@ import pe.edu.upeu.mana.enums.TipoPagoContrato;
 class PensionesOracleIntegrationTest {
     @Autowired pe.edu.upeu.mana.service.service.ClienteService clientesService;
 
+    @Test
+    void clientesBuscanDniExactoNombreOApellidoSinDistinguirMayusculasYPaginan() {
+        String texto = UUID.randomUUID().toString().replace("-", "").replaceAll("[0-9]", "x");
+        var primero = clienteParaBusqueda(texto + "Ana", "Familia");
+        var segundo = clienteParaBusqueda(texto + "Bruno", "Familia");
+        var tercero = clienteParaBusqueda("Otro", texto + "Apellido");
+
+        var primeraPagina = clientesService.listar("  " + texto.toUpperCase(Locale.ROOT) + "  ", 0, 2, "id", "asc");
+        var segundaPagina = clientesService.listar(texto, 1, 2, "id", "asc");
+        assertEquals(3L, primeraPagina.getTotalElementos());
+        assertEquals(2, primeraPagina.getTotalPaginas());
+        assertEquals(List.of(primero.getId(), segundo.getId()), primeraPagina.getContenido().stream().map(c -> c.getId()).toList());
+        assertEquals(List.of(tercero.getId()), segundaPagina.getContenido().stream().map(c -> c.getId()).toList());
+        assertEquals(1, segundaPagina.getPagina());
+
+        var porDni = clientesService.listar(primero.getDni(), 0, 20, "id", "asc");
+        assertEquals(1L, porDni.getTotalElementos());
+        assertEquals(primero.getId(), porDni.getContenido().getFirst().getId());
+        assertTrue(clientesService.listar(primero.getDni().substring(0, 7), 0, 20, "id", "asc")
+                .getContenido().stream().noneMatch(c -> c.getId().equals(primero.getId())));
+    }
+
+    @Test
+    void clientesTratanPorcentajeGuionBajoYCaracterDeEscapeComoTextoLiteral() {
+        String texto = "Busca" + UUID.randomUUID().toString().replace("-", "");
+        var porcentaje = clienteParaBusqueda(texto + "50%Real", "Familia");
+        clienteParaBusqueda(texto + "50XYReal", "Familia");
+        var guionBajo = clienteParaBusqueda("Otro", texto + "_Real");
+        clienteParaBusqueda("Otro", texto + "XReal");
+        var escape = clienteParaBusqueda(texto + "!Real", "Familia");
+        clienteParaBusqueda(texto + "Real", "Familia");
+
+        for (var caso : Map.of(texto + "50%", porcentaje.getId(), texto + "_", guionBajo.getId(), texto + "!", escape.getId()).entrySet()) {
+            var resultado = clientesService.listar(caso.getKey(), 0, 20, "id", "asc");
+            assertEquals(1L, resultado.getTotalElementos());
+            assertEquals(caso.getValue(), resultado.getContenido().getFirst().getId());
+        }
+    }
+
+    private Cliente clienteParaBusqueda(String nombre, String apellido) {
+        var cliente = new Cliente();
+        cliente.setDni(dni());
+        cliente.setNombre(nombre);
+        cliente.setApellido(apellido);
+        return clientes.saveAndFlush(cliente);
+    }
+
     @Test void listadosGrandesPaginanEnLaBaseDeDatos() {
         var contrato=registrar();
         assertEquals(1L,contratos.listar(null,EstadoContrato.ACTIVO,null,null,null,0,1,"fechaInicio","asc").getTotalElementos());
         assertEquals(contrato.getId(),contratos.listar(null,EstadoContrato.ACTIVO,null,null,null,0,1,"id","asc").getContenido().getFirst().getId());
-        assertTrue(clientesService.listar(0,1,"dni","asc").getContenido().size()<=1);
+        assertTrue(clientesService.listar(null,0,1,"dni","asc").getContenido().size()<=1);
         assertEquals(1L,cajas.listar(null,null,null,null,0,1,"apertura","desc").getTotalElementos());
         assertEquals(0L,ventasService.listar(null,null,null,null,null,0,1,"total","desc").getTotalElementos());
         assertEquals(0L,consumos.listar(null,null,null,null,null,0,1,"fecha","asc").getTotalElementos());

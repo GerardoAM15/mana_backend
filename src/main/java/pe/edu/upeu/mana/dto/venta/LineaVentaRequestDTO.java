@@ -1,6 +1,8 @@
 package pe.edu.upeu.mana.dto.venta;
 
 import java.util.List;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import pe.edu.upeu.mana.enums.TipoLineaVenta;
@@ -37,6 +39,8 @@ public class LineaVentaRequestDTO {
     private List<@NotNull(message = "Plato obligatorio") @Valid PlatoCantidadRequestDTO> platos;
 
     @AssertTrue(message = "Indique solo el identificador del tipo elegido; COMBO requiere sus platos")
+    @JsonIgnore
+    @Schema(hidden = true)
     public boolean isFormaValida() {
         if (tipo == null)
             return false;

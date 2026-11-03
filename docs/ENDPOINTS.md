@@ -498,7 +498,7 @@ Respuesta 200:
 
 Permiso: **CLIENTE_LEER**.
 
-Parámetros: `pagina` (query, opcional, defecto 0), `tamanio` (query, opcional, defecto 20), `ordenarPor` (query, opcional, defecto id), `direccion` (query, opcional, defecto desc).
+Parámetros: `q` (query, opcional), `pagina` (query, opcional, defecto 0), `tamanio` (query, opcional, defecto 20), `ordenarPor` (query, opcional, defecto id), `direccion` (query, opcional, defecto desc).
 
 Request: sin cuerpo.
 

@@ -104,6 +104,8 @@ Inyección mediante constructores explícitos, transacciones por método, lectur
 
 Clientes, contratos, ventas, consumos, movimientos de stock, gastos y cajas admiten `pagina=0&tamanio=20&ordenarPor=id&direccion=desc`. El tamaño permitido es 1–100; la página comienza en cero. La paginación y el conteo se ejecutan en Oracle. Los catálogos pequeños permanecen como listas.
 
+`GET /api/v1/clientes` acepta además `q`: busca DNI exacto o texto contenido en nombre/apellido, sin distinguir mayúsculas. Se recortan espacios exteriores y se tratan `%`, `_` y `!` como texto literal. Omitir `q` o enviarlo vacío conserva el listado completo y su paginación.
+
 ```json
 {"contenido":[],"pagina":0,"tamanio":20,"totalElementos":0,"totalPaginas":0,"ultima":true}
 ```

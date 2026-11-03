@@ -20,6 +20,16 @@ class OracleSchemaIntegrationTest {
         var respuesta=HttpClient.newHttpClient().send(HttpRequest.newBuilder(URI.create("http://localhost:"+puerto+"/v3/api-docs")).GET().build(),HttpResponse.BodyHandlers.ofString());
         assertEquals(200,respuesta.statusCode());
         assertTrue(mapper.readTree(respuesta.body()).get("paths").has("/api/v1/ventas"));
+        var contrato=mapper.readTree(respuesta.body());
+        assertFalse(contrato.get("components").get("schemas").get("LineaVentaRequestDTO").get("properties").has("formaValida"));
+        boolean tieneQ=false;
+        for(var parametro:contrato.get("paths").get("/api/v1/clientes").get("get").get("parameters")) {
+            if(parametro.get("name").asText().equals("q")) {
+                tieneQ=true;
+                assertFalse(parametro.get("required").asBoolean());
+            }
+        }
+        assertTrue(tieneQ);
         java.nio.file.Files.writeString(java.nio.file.Path.of("target/openapi.json"),respuesta.body());
     }
 
