@@ -39,7 +39,7 @@ public class ReglaCobroServiceImpl implements ReglaCobroService {
         long inicioOperacion = System.nanoTime();
         log.info("Inicio ReglaCobroServiceImpl.crear");
         try {
-            validar(r);
+            validar(r, null);
             var e = new ReglaCobro();
             asignar(e, r);
             repository.saveAndFlush(e);
@@ -55,7 +55,7 @@ public class ReglaCobroServiceImpl implements ReglaCobroService {
         long inicioOperacion = System.nanoTime();
         log.info("Inicio ReglaCobroServiceImpl.actualizar");
         try {
-            validar(r);
+            validar(r, id);
             var e = repository.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Registro no encontrado"));
             asignar(e, r);
             vincular(e, r);
@@ -103,9 +103,12 @@ public class ReglaCobroServiceImpl implements ReglaCobroService {
         return repository.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Registro no encontrado"));
     }
 
-    private void validar(ReglaCobroRequestDTO r) {
-        if (!servicios.findById(r.getServicio()).map(s -> Boolean.TRUE.equals(s.getActivo())).orElse(false))
+    private void validar(ReglaCobroRequestDTO r, Long id) {
+        // El servicio padre serializa altas y activaciones, incluso si aún no hay una regla.
+        if (!servicios.buscarParaActualizar(r.getServicio()).map(s -> Boolean.TRUE.equals(s.getActivo())).orElse(false))
             throw new ReglaNegocioException("Servicio inexistente o inactivo");
+        if (Boolean.TRUE.equals(r.getActivo()) && repository.existsByServicioAndActivoTrueAndIdNot(r.getServicio(), id == null ? -1L : id))
+            throw new ReglaNegocioException("Ya existe un menú activo para ese servicio; desactívelo primero");
         var codigos = new HashSet<String>();
         for (var c : r.getComponentes()) {
             if (!codigos.add(c.getCategoria()))

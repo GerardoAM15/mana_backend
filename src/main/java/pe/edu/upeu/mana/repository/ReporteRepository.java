@@ -29,6 +29,9 @@ public interface ReporteRepository extends Repository<Contrato, Long> {
         from pagos_contrato p join contratos c on c.id=p.contrato_id
         union all select v.local_id,p.fecha,0,p.monto,0 from pagos_venta p join ventas v on v.id=p.venta_id where v.estado in ('PAGADA','ANULADA')
         union all select v.local_id,d.fecha,0,-d.monto,0 from devoluciones_venta d join ventas v on v.id=d.venta_id
+        union all select sc.local_id,c.registrado_en,c.recargo_llevar,0,0
+        from consumos c join sesiones_caja sc on sc.id=c.caja_id
+        where c.anulado=0 and c.recargo_llevar>0
         ) where local_id=:localId and fecha>=:desde and fecha<:hasta
         group by to_char(fecha,'YYYY-MM') order by periodo
         """, nativeQuery = true)
@@ -59,6 +62,9 @@ public interface ReporteRepository extends Repository<Contrato, Long> {
         from pagos_contrato p join contratos c on c.id=p.contrato_id
         union all select v.local_id,p.fecha,0,p.monto,0 from pagos_venta p join ventas v on v.id=p.venta_id where v.estado in ('PAGADA','ANULADA')
         union all select v.local_id,d.fecha,0,-d.monto,0 from devoluciones_venta d join ventas v on v.id=d.venta_id
+        union all select sc.local_id,c.registrado_en,c.recargo_llevar,0,0
+        from consumos c join sesiones_caja sc on sc.id=c.caja_id
+        where c.anulado=0 and c.recargo_llevar>0
         union all select local_id,fecha,0,0,monto from gastos_diarios where activo=1
         ) where local_id=:localId and fecha>=:desde and fecha<:hasta
         ) group by periodo order by periodo

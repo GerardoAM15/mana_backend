@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.slf4j.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.access.AccessDeniedException;
 import pe.edu.upeu.mana.entity.*;
 import pe.edu.upeu.mana.enums.*;
 import pe.edu.upeu.mana.exception.*;
@@ -297,7 +298,10 @@ public class VentaServiceImpl implements VentaService {
 
     private void bloquearCaja(Long id) {
         var cajaId = ventas.buscarCajaId(id).orElseThrow(() -> new RecursoNoEncontradoException("Venta no encontrada"));
-        cajas.buscarAbiertaParaActualizar(cajaId);
+        var caja = cajas.buscarAbiertaParaActualizar(cajaId);
+        var usuario = contexto.usuario();
+        if (!Objects.equals(caja.getUsuarioId(), usuario.getId()) && usuario.getRol() != RolUsuario.ADMINISTRADOR)
+            throw new AccessDeniedException("Solo el dueño de la caja o un administrador puede operar la venta");
     }
 
     @Transactional(readOnly = true)

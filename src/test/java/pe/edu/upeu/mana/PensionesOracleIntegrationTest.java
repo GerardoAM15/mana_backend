@@ -141,6 +141,113 @@ class PensionesOracleIntegrationTest {
     @Autowired
     ReporteService reportes;
 
+    @Autowired
+    ConsumoRepository consumosRepository;
+
+    @Autowired
+    SesionCajaRepository sesionesCaja;
+
+    @Autowired
+    ReglaCobroService reglasService;
+
+    @Autowired
+    ServicioRepository serviciosRepository;
+
+    @Test
+    void reglasPermitenEditarLaPropiaPeroNoActivarOtraDelMismoServicio() {
+        var servicio = new Servicio();
+        servicio.setCodigo("TEST-" + UUID.randomUUID().toString().substring(0, 20));
+        servicio.setNombre("Servicio para revisión");
+        serviciosRepository.saveAndFlush(servicio);
+        var componentes = List.of(new pe.edu.upeu.mana.dto.menu.ComponenteReglaRequestDTO("PAN", 2L));
+        String nombre = "Menú de revisión " + UUID.randomUUID();
+        var activa = reglasService.crear(new pe.edu.upeu.mana.dto.menu.ReglaCobroRequestDTO(
+                nombre, servicio.getCodigo(), new BigDecimal("4.50"), BigDecimal.ZERO, true, componentes));
+
+        var editada = reglasService.actualizar(activa.getId(), new pe.edu.upeu.mana.dto.menu.ReglaCobroRequestDTO(
+                nombre, servicio.getCodigo(), new BigDecimal("5.00"), BigDecimal.ZERO, true, componentes));
+        assertEquals(new BigDecimal("5.00"), editada.getPrecioCombo());
+
+        var inactiva = reglasService.crear(new pe.edu.upeu.mana.dto.menu.ReglaCobroRequestDTO(
+                "Alternativa " + UUID.randomUUID(), servicio.getCodigo(), new BigDecimal("4.50"), BigDecimal.ZERO, false, componentes));
+        var error = assertThrows(ReglaNegocioException.class, () -> reglasService.actualizar(inactiva.getId(),
+                new pe.edu.upeu.mana.dto.menu.ReglaCobroRequestDTO(inactiva.getNombre(), servicio.getCodigo(),
+                        new BigDecimal("4.50"), BigDecimal.ZERO, true, componentes)));
+        assertEquals("Ya existe un menú activo para ese servicio; desactívelo primero", error.getMessage());
+    }
+
+    @Test
+    void reportesIncluyenRecargosPorFechaDeRegistroYLocalDeLaCaja() {
+        var contrato = registrar();
+        var caja = cajas.buscarActual();
+        var hoy = LocalDate.now(clock);
+        Long detalleId = contrato.getDetalles().getFirst().getId();
+
+        // La fecha del servicio difiere a propósito: el ingreso pertenece a registrado_en.
+        var recargo = consumoParaReporte(detalleId, caja.getId(), hoy.minusMonths(1),
+                hoy.atTime(12, 0), new BigDecimal("3.50"), false);
+        consumoParaReporte(detalleId, caja.getId(), hoy, hoy.atTime(12, 1), new BigDecimal("70.00"), true);
+        consumoParaReporte(detalleId, caja.getId(), hoy, hoy.atTime(12, 2), BigDecimal.ZERO, false);
+        consumoParaReporte(detalleId, caja.getId(), hoy, hoy.minusDays(1).atTime(12, 0), new BigDecimal("2.25"), false);
+
+        var otroLocal = new Local();
+        otroLocal.setNombre("Local para reporte " + UUID.randomUUID());
+        locales.saveAndFlush(otroLocal);
+        var otraCaja = new SesionCaja();
+        otraCaja.setLocalId(otroLocal.getId());
+        otraCaja.setUsuarioId(caja.getUsuarioId());
+        otraCaja.setApertura(hoy.atStartOfDay());
+        otraCaja.setMontoInicial(new BigDecimal("0.00"));
+        otraCaja.setClaveAbierta("test-reportes-" + UUID.randomUUID());
+        sesionesCaja.saveAndFlush(otraCaja);
+        consumoParaReporte(detalleId, otraCaja.getId(), hoy, hoy.atTime(12, 3), new BigDecimal("5.25"), false);
+
+        var esperado = contrato.getMontoTotal().add(new BigDecimal("3.50"));
+        var ingreso = reportes.ingresos(hoy, hoy, null).getFirst();
+        assertEquals(esperado, ingreso.getContratos());
+        assertEquals(new BigDecimal("0.00"), ingreso.getVentas());
+        assertEquals(esperado, ingreso.getTotal());
+        for (String agrupacion : List.of("DIA", "MES")) {
+            var gastoIngreso = reportes.gastos(hoy, hoy, null, agrupacion).getFirst();
+            assertEquals(esperado, gastoIngreso.getIngresos());
+            assertEquals(new BigDecimal("0.00"), gastoIngreso.getGastos());
+            assertEquals(esperado, gastoIngreso.getDiferencia());
+            assertEquals(new BigDecimal("5.25"),
+                    reportes.gastos(hoy, hoy, otroLocal.getId(), agrupacion).getFirst().getIngresos());
+        }
+        assertEquals(new BigDecimal("5.25"),
+                reportes.ingresos(hoy, hoy, otroLocal.getId()).getFirst().getContratos());
+
+        recargo.setAnulado(true);
+        recargo.setClaveDiaria(null);
+        recargo.setAnuladoEn(LocalDateTime.now(clock));
+        recargo.setMotivoAnulacion("Anulación para reporte");
+        consumosRepository.flush();
+        assertEquals(contrato.getMontoTotal(), reportes.ingresos(hoy, hoy, null).getFirst().getContratos());
+        assertEquals(contrato.getMontoTotal(), reportes.gastos(hoy, hoy, null, "DIA").getFirst().getIngresos());
+    }
+
+    private Consumo consumoParaReporte(Long detalleId, Long cajaId, LocalDate fecha,
+            LocalDateTime registradoEn, BigDecimal recargo, boolean anulado) {
+        var c = new Consumo();
+        c.setDetalleContratoId(detalleId);
+        c.setCajaId(cajaId);
+        c.setFecha(fecha);
+        c.setRegistradoEn(registradoEn);
+        c.setValorRacion(detalles.findById(detalleId).orElseThrow().getPrecioRacionPactado());
+        c.setParaLlevar(recargo.signum() > 0);
+        c.setRecargoLlevar(recargo.setScale(2));
+        c.setMetodoRecargo(recargo.signum() > 0 ? "YAPE" : null);
+        c.setAnulado(anulado);
+        if (anulado) {
+            c.setAnuladoEn(registradoEn);
+            c.setMotivoAnulacion("Anulación de prueba");
+        } else {
+            c.setClaveDiaria("test-reporte-" + UUID.randomUUID());
+        }
+        return consumosRepository.saveAndFlush(c);
+    }
+
     Long localId, clienteId, planId;
 
     @BeforeEach

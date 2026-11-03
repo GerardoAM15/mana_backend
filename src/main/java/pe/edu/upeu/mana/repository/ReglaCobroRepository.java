@@ -10,6 +10,8 @@ public interface ReglaCobroRepository extends JpaRepository<ReglaCobro, Long> {
 
     java.util.List<ReglaCobro> findByServicioAndActivoTrueOrderById(String servicio);
 
+    boolean existsByServicioAndActivoTrueAndIdNot(String servicio, Long id);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select e from ReglaCobro e where e.id = :id")
     Optional<ReglaCobro> buscarParaActualizar(@Param("id") Long id);
