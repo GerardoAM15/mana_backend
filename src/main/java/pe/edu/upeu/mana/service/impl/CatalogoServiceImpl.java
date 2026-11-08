@@ -34,11 +34,11 @@ public class CatalogoServiceImpl implements pe.edu.upeu.mana.service.service.Cat
     @Transactional(readOnly = true)
     public CatalogosResponseDTO listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CatalogoServiceImpl.listar");
+        log.debug("Inicio CatalogoServiceImpl.listar");
         try {
             return new CatalogosResponseDTO(servicios.findAll(org.springframework.data.domain.Sort.by("codigo")).stream().map(s -> new CatalogoResponseDTO(s.getCodigo(), s.getNombre(), s.getDescripcion(), s.getActivo())).toList(), metodos.findAll(org.springframework.data.domain.Sort.by("codigo")).stream().map(s -> new CatalogoResponseDTO(s.getCodigo(), s.getNombre(), s.getDescripcion(), s.getActivo())).toList(), categorias.findAll(org.springframework.data.domain.Sort.by("codigo")).stream().map(s -> new CatalogoResponseDTO(s.getCodigo(), s.getNombre(), s.getDescripcion(), s.getActivo())).toList(), roles.findAll(org.springframework.data.domain.Sort.by("codigo")).stream().map(s -> new CatalogoResponseDTO(s.getCodigo(), s.getNombre(), s.getDescripcion(), s.getActivo())).toList(), dias.findAll(org.springframework.data.domain.Sort.by("servicio", "diaSemana")).stream().map(s -> new DiaAtencionResponseDTO(s.getServicio(), s.getDiaSemana())).toList());
         } finally {
-            log.info("Fin CatalogoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CatalogoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

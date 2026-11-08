@@ -34,7 +34,7 @@ public class ProveedorServiceImpl implements ProveedorService {
     @Transactional
     public ProveedorResponseDTO crear(ProveedorRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ProveedorServiceImpl.crear");
+        log.debug("Inicio ProveedorServiceImpl.crear");
         try {
             var p = new Proveedor();
             asignar(p, r);
@@ -42,14 +42,14 @@ public class ProveedorServiceImpl implements ProveedorService {
             vincular(p, r);
             return respuesta(p);
         } finally {
-            log.info("Fin ProveedorServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ProveedorServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public ProveedorResponseDTO actualizar(Long id, ProveedorRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ProveedorServiceImpl.actualizar");
+        log.debug("Inicio ProveedorServiceImpl.actualizar");
         try {
             var p = proveedores.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Proveedor no encontrado"));
             asignar(p, r);
@@ -57,7 +57,7 @@ public class ProveedorServiceImpl implements ProveedorService {
             proveedores.flush();
             return respuesta(p);
         } finally {
-            log.info("Fin ProveedorServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ProveedorServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -83,33 +83,33 @@ public class ProveedorServiceImpl implements ProveedorService {
     @Transactional(readOnly = true)
     public ProveedorResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ProveedorServiceImpl.buscar");
+        log.debug("Inicio ProveedorServiceImpl.buscar");
         try {
             return respuesta(obtener(id));
         } finally {
-            log.info("Fin ProveedorServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ProveedorServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<ProveedorResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ProveedorServiceImpl.listar");
+        log.debug("Inicio ProveedorServiceImpl.listar");
         try {
             return proveedores.findAll(org.springframework.data.domain.Sort.by("id")).stream().map(this::respuesta).toList();
         } finally {
-            log.info("Fin ProveedorServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ProveedorServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ProveedorServiceImpl.eliminar");
+        log.debug("Inicio ProveedorServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin ProveedorServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ProveedorServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

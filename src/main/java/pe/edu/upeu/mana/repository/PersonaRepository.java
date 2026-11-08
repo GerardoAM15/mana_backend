@@ -10,6 +10,8 @@ public interface PersonaRepository extends JpaRepository<Persona, Long> {
 
     boolean existsByDniAndIdNot(String dni, Long id);
 
+    Optional<Persona> findByDni(String dni);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select e from Persona e where e.id = :id")
     Optional<Persona> buscarParaActualizar(@Param("id") Long id);

@@ -37,64 +37,64 @@ public class GastoDiarioServiceImpl implements GastoDiarioService {
     @Transactional
     public GastoDiarioResponseDTO crear(GastoDiarioRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio GastoDiarioServiceImpl.crear");
+        log.debug("Inicio GastoDiarioServiceImpl.crear");
         try {
             var e = new GastoDiario();
             e.setLocalId(contexto.localId(null));
             mapper.actualizar(e, r);
             return mapper.toResponse(repository.saveAndFlush(e));
         } finally {
-            log.info("Fin GastoDiarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin GastoDiarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public GastoDiarioResponseDTO actualizar(Long id, GastoDiarioRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio GastoDiarioServiceImpl.actualizar");
+        log.debug("Inicio GastoDiarioServiceImpl.actualizar");
         try {
             var e = obtener(id);
             mapper.actualizar(e, r);
             repository.flush();
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin GastoDiarioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin GastoDiarioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public GastoDiarioResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio GastoDiarioServiceImpl.buscar");
+        log.debug("Inicio GastoDiarioServiceImpl.buscar");
         try {
             return mapper.toResponse(obtener(id));
         } finally {
-            log.info("Fin GastoDiarioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin GastoDiarioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PaginaResponseDTO<GastoDiarioResponseDTO> listar(Long localId, LocalDate desde, LocalDate hasta, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
-        log.info("Inicio GastoDiarioServiceImpl.listar");
+        log.debug("Inicio GastoDiarioServiceImpl.listar");
         try {
             var pageable = PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
             if (desde != null && hasta != null && desde.isAfter(hasta))
                 throw new DatosInvalidosException("Rango de fechas inválido");
             return PaginaResponseDTO.de(repository.filtrar(contexto.localId(localId), desde, hasta, pageable).map(mapper::toResponse));
         } finally {
-            log.info("Fin GastoDiarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
+            log.debug("Fin GastoDiarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio GastoDiarioServiceImpl.eliminar");
+        log.debug("Inicio GastoDiarioServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin GastoDiarioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin GastoDiarioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

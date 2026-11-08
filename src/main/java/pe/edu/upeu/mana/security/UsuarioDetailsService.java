@@ -22,13 +22,13 @@ public class UsuarioDetailsService implements UserDetailsService {
     @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String correo) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio UsuarioDetailsService.loadUserByUsername");
+        log.debug("Inicio UsuarioDetailsService.loadUserByUsername");
         try {
             var u = usuarios.findByCorreoIgnoreCase(correo).orElseThrow(() -> new UsernameNotFoundException("Credenciales inválidas"));
             var e = empleados.findById(u.getEmpleadoId()).orElseThrow(() -> new UsernameNotFoundException("Credenciales inválidas"));
             return User.withUsername(u.getCorreo()).password(u.getClaveHash()).authorities(PermisosPorRol.permisos(u.getRol().name()).toArray(String[]::new)).disabled(!Boolean.TRUE.equals(u.getActivo()) || !Boolean.TRUE.equals(e.getActivo())).build();
         } finally {
-            log.info("Fin UsuarioDetailsService.loadUserByUsername | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin UsuarioDetailsService.loadUserByUsername | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

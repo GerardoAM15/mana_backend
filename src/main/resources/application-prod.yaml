@@ -10,3 +10,9 @@ app:
     email: ${MANA_ADMIN_EMAIL:}
     password: ${MANA_ADMIN_PASSWORD:}
     dni: ${MANA_ADMIN_DNI:}
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

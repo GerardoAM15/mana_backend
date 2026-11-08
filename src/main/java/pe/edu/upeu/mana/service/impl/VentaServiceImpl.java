@@ -90,7 +90,9 @@ public class VentaServiceImpl implements VentaService {
 
     private final Clock clock;
 
-    public VentaServiceImpl(VentaRepository ventas, DetalleOrdenRepository detalles, DetalleComboPlatoRepository combos, PagoVentaRepository pagos, DevolucionVentaRepository devoluciones, ClienteRepository clientes, ServicioRepository servicios, PlatoRepository platos, BebidaRepository bebidas, ReglaCobroRepository reglas, ComponenteReglaRepository componentes, PrecioSueltoRepository precios, ProgramacionMenuRepository programaciones, MenuPlatoRepository menuPlatos, ContextoLocalService contexto, CajaService cajas, StockService stocks, CorrelativoService correlativos, ValidadorMenu validadorMenu, ValidadorPagos validadorPagos, CalculadoraTotalesVenta calculadora, VentaMapper mapper, ReglaCobroMapper reglaMapper, MenuService menus, Clock clock) {
+    private final ValidadorAtencion atencion;
+
+    public VentaServiceImpl(VentaRepository ventas, DetalleOrdenRepository detalles, DetalleComboPlatoRepository combos, PagoVentaRepository pagos, DevolucionVentaRepository devoluciones, ClienteRepository clientes, ServicioRepository servicios, PlatoRepository platos, BebidaRepository bebidas, ReglaCobroRepository reglas, ComponenteReglaRepository componentes, PrecioSueltoRepository precios, ProgramacionMenuRepository programaciones, MenuPlatoRepository menuPlatos, ContextoLocalService contexto, CajaService cajas, StockService stocks, CorrelativoService correlativos, ValidadorMenu validadorMenu, ValidadorPagos validadorPagos, CalculadoraTotalesVenta calculadora, VentaMapper mapper, ReglaCobroMapper reglaMapper, MenuService menus, Clock clock, ValidadorAtencion atencion) {
         this.ventas = ventas;
         this.detalles = detalles;
         this.combos = combos;
@@ -113,6 +115,7 @@ public class VentaServiceImpl implements VentaService {
         this.validadorPagos = validadorPagos;
         this.calculadora = calculadora;
         this.mapper = mapper;
+        this.atencion = atencion;
         this.reglaMapper = reglaMapper;
         this.menus = menus;
         this.clock = clock;
@@ -121,13 +124,14 @@ public class VentaServiceImpl implements VentaService {
     @Transactional
     public VentaResponseDTO crear(VentaRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio VentaServiceImpl.crear");
+        log.debug("Inicio VentaServiceImpl.crear");
         try {
             var caja = cajas.buscarActualParaActualizar();
             if (!servicios.findById(r.getServicio()).map(s -> Boolean.TRUE.equals(s.getActivo())).orElse(false))
                 throw new ReglaNegocioException("Servicio inexistente o inactivo");
             if (r.getClienteId() != null && !clientes.findById(r.getClienteId()).map(c -> Boolean.TRUE.equals(c.getActivo())).orElse(false))
                 throw new ReglaNegocioException("Cliente inexistente o inactivo");
+            atencion.validar(caja.getLocalId(), LocalDate.now(clock), r.getServicio());
             var ids = r.getLineas().stream().filter(l -> l.getTipo() == TipoLineaVenta.BEBIDA).map(LineaVentaRequestDTO::getBebidaId).collect(Collectors.toSet());
             var stock = stocks.bloquear(caja.getLocalId(), ids, false);
             var lineas = new ArrayList<DetalleOrden>();
@@ -167,7 +171,7 @@ public class VentaServiceImpl implements VentaService {
             log.info("Venta registrada | numero={} | usuario={} | total={}", v.getNumero(), contexto.usuario().getCorreo(), v.getTotal());
             return respuesta(v);
         } finally {
-            log.info("Fin VentaServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin VentaServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -226,7 +230,7 @@ public class VentaServiceImpl implements VentaService {
     @Transactional
     public VentaResponseDTO cobrar(Long id, PagosVentaRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio VentaServiceImpl.cobrar");
+        log.debug("Inicio VentaServiceImpl.cobrar");
         try {
             bloquearCaja(id);
             var v = ventas.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Venta no encontrada"));
@@ -239,7 +243,7 @@ public class VentaServiceImpl implements VentaService {
             log.info("Venta cobrada | numero={} | usuario={} | total={}", v.getNumero(), contexto.usuario().getCorreo(), v.getTotal());
             return respuesta(v);
         } finally {
-            log.info("Fin VentaServiceImpl.cobrar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin VentaServiceImpl.cobrar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -258,7 +262,7 @@ public class VentaServiceImpl implements VentaService {
     @Transactional
     public VentaResponseDTO anular(Long id, AnularRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio VentaServiceImpl.anular");
+        log.debug("Inicio VentaServiceImpl.anular");
         try {
             String motivo = r.getMotivo().trim();
             if (motivo.length() < 10 || motivo.length() > 250)
@@ -293,7 +297,7 @@ public class VentaServiceImpl implements VentaService {
             log.info("Venta anulada | numero={} | usuario={} | total={}", v.getNumero(), contexto.usuario().getCorreo(), v.getTotal());
             return respuesta(v);
         } finally {
-            log.info("Fin VentaServiceImpl.anular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin VentaServiceImpl.anular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -308,39 +312,43 @@ public class VentaServiceImpl implements VentaService {
     @Transactional(readOnly = true)
     public VentaResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio VentaServiceImpl.buscar");
+        log.debug("Inicio VentaServiceImpl.buscar");
         try {
             var v = ventas.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Venta no encontrada"));
             contexto.validarLocal(v.getLocalId());
             return respuesta(v);
         } finally {
-            log.info("Fin VentaServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin VentaServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PaginaResponseDTO<VentaResponseDTO> listar(LocalDate desde, LocalDate hasta, EstadoVenta estado, Long cajaId, Long localId, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
-        log.info("Inicio VentaServiceImpl.listar");
+        log.debug("Inicio VentaServiceImpl.listar");
         try {
             var pageable = PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
             if (desde != null && hasta != null && desde.isAfter(hasta))
                 throw new DatosInvalidosException("Rango de fechas inválido");
             return PaginaResponseDTO.de(ventas.filtrar(contexto.localId(localId), desde == null ? null : desde.atStartOfDay(), hasta == null ? null : hasta.plusDays(1).atStartOfDay(), estado, cajaId, pageable).map(this::respuesta));
         } finally {
-            log.info("Fin VentaServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
+            log.debug("Fin VentaServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }
     }
 
     private VentaResponseDTO respuesta(Venta v) {
-        var lineas = detalles.findByVentaIdOrderById(v.getId()).stream().map(d -> mapper.toLinea(d, combos.findByDetalleIdOrderByPlatoId(d.getId()).stream().map(c -> new PlatoComboResponseDTO(c.getPlatoId(), platos.findById(c.getPlatoId()).orElseThrow(() -> new RecursoNoEncontradoException("Plato no encontrado")).getNombre(), c.getCantidad())).toList())).toList();
+        var ordenes = detalles.findByVentaIdOrderById(v.getId());
+        var seleccion = combos.findByDetalleIdInOrderByPlatoId(ordenes.stream().map(DetalleOrden::getId).toList());
+        var catalogo = platos.findAllById(seleccion.stream().map(DetalleComboPlato::getPlatoId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(Plato::getId, p -> p));
+        var porDetalle = seleccion.stream().collect(Collectors.groupingBy(DetalleComboPlato::getDetalleId));
+        var lineas = ordenes.stream().map(d -> mapper.toLinea(d, porDetalle.getOrDefault(d.getId(), List.of()).stream().map(c -> new PlatoComboResponseDTO(c.getPlatoId(), catalogo.get(c.getPlatoId()).getNombre(), c.getCantidad())).toList())).toList();
         return mapper.toResponse(v, lineas, pagos.findByVentaIdOrderById(v.getId()), devoluciones.findByVentaIdOrderById(v.getId()));
     }
 
     @Transactional(readOnly = true)
     public PosCatalogoResponseDTO catalogo(String servicio) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio VentaServiceImpl.catalogo");
+        log.debug("Inicio VentaServiceImpl.catalogo");
         try {
             if (!servicios.findById(servicio).map(s -> Boolean.TRUE.equals(s.getActivo())).orElse(false))
                 throw new ReglaNegocioException("Servicio inexistente o inactivo");
@@ -357,7 +365,7 @@ public class VentaServiceImpl implements VentaService {
             var reglasPos = reglas.findByServicioAndActivoTrueOrderById(servicio).stream().map(r -> reglaMapper.toResponse(r, componentes.findByReglaId(r.getId()))).toList();
             return new PosCatalogoResponseDTO(local, hoy, servicio, menu, reglasPos, sueltos, bebidas.listarPos(local));
         } finally {
-            log.info("Fin VentaServiceImpl.catalogo | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin VentaServiceImpl.catalogo | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

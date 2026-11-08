@@ -7,6 +7,8 @@ import org.springframework.data.repository.query.Param;
 import pe.edu.upeu.mana.entity.*;
 
 public interface DetalleConsumoRepository extends JpaRepository<DetalleConsumo, Long> {
+    java.util.List<DetalleConsumo> findByConsumoIdInOrderById(java.util.Collection<Long> ids);
+
 
     java.util.List<DetalleConsumo> findByConsumoIdOrderById(Long consumoId);
 

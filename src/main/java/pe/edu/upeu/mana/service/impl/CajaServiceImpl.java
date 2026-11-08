@@ -68,7 +68,7 @@ public class CajaServiceImpl implements CajaService {
     @Transactional
     public CajaResponseDTO abrir(AbrirCajaRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.abrir");
+        log.debug("Inicio CajaServiceImpl.abrir");
         try {
             var usuario = contexto.usuario();
             // Serializa aperturas concurrentes; la clave única protege también a otros procesos.
@@ -85,25 +85,25 @@ public class CajaServiceImpl implements CajaService {
             log.info("Caja abierta | caja={} | usuario={} | montoInicial={}", caja.getId(), usuario.getCorreo(), caja.getMontoInicial());
             return mapper.toResponse(caja);
         } finally {
-            log.info("Fin CajaServiceImpl.abrir | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.abrir | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public CajaResponseDTO buscarActual() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.buscarActual");
+        log.debug("Inicio CajaServiceImpl.buscarActual");
         try {
             return mapper.toResponse(actual());
         } finally {
-            log.info("Fin CajaServiceImpl.buscarActual | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.buscarActual | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public ResumenCajaResponseDTO resumir(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.resumir");
+        log.debug("Inicio CajaServiceImpl.resumir");
         try {
             var caja = obtener(id);
             validarLectura(caja);
@@ -118,14 +118,14 @@ public class CajaServiceImpl implements CajaService {
             var conteos = cajas.contarOperaciones(id);
             return new ResumenCajaResponseDTO(mapper.toResponse(caja), lineas, total(saldos), conteos.getVentas(), conteos.getConsumos(), conteos.getContratos());
         } finally {
-            log.info("Fin CajaServiceImpl.resumir | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.resumir | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public CajaResponseDTO cerrar(Long id, CerrarCajaRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.cerrar");
+        log.debug("Inicio CajaServiceImpl.cerrar");
         try {
             var caja = cajas.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Caja no encontrada"));
             contexto.validarLocal(caja.getLocalId());
@@ -170,14 +170,14 @@ public class CajaServiceImpl implements CajaService {
             log.info("Caja cerrada | caja={} | usuario={} | esperado={} | contado={} | diferencia={}", id, usuario.getCorreo(), caja.getMontoEsperado(), totalContado, caja.getDiferencia());
             return mapper.toResponse(caja);
         } finally {
-            log.info("Fin CajaServiceImpl.cerrar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.cerrar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PaginaResponseDTO<CajaResponseDTO> listar(LocalDate desde, LocalDate hasta, Long usuarioId, Long localId, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.listar");
+        log.debug("Inicio CajaServiceImpl.listar");
         try {
             var pageable = PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
             if (!pe.edu.upeu.mana.security.PermisosPorRol.permisos(contexto.usuario().getRol().name()).contains("CAJA_SUPERVISAR"))
@@ -186,14 +186,14 @@ public class CajaServiceImpl implements CajaService {
                 throw new DatosInvalidosException("Rango de fechas inválido");
             return PaginaResponseDTO.de(cajas.filtrar(contexto.localId(localId), usuarioId, desde == null ? null : desde.atStartOfDay(), hasta == null ? null : hasta.plusDays(1).atStartOfDay(), pageable).map(mapper::toResponse));
         } finally {
-            log.info("Fin CajaServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }
     }
 
     @Transactional
     public SesionCaja buscarActualParaActualizar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.buscarActualParaActualizar");
+        log.debug("Inicio CajaServiceImpl.buscarActualParaActualizar");
         try {
             var usuario = contexto.usuario();
             var caja = cajas.buscarAbiertaParaActualizar(usuario.getId().toString()).orElseThrow(() -> new ReglaNegocioException("Debe tener una caja abierta"));
@@ -201,28 +201,28 @@ public class CajaServiceImpl implements CajaService {
             exigirAbierta(caja);
             return caja;
         } finally {
-            log.info("Fin CajaServiceImpl.buscarActualParaActualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.buscarActualParaActualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public SesionCaja buscarAbiertaParaActualizar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.buscarAbiertaParaActualizar");
+        log.debug("Inicio CajaServiceImpl.buscarAbiertaParaActualizar");
         try {
             var caja = cajas.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Caja no encontrada"));
             contexto.validarLocal(caja.getLocalId());
             exigirAbierta(caja);
             return caja;
         } finally {
-            log.info("Fin CajaServiceImpl.buscarAbiertaParaActualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.buscarAbiertaParaActualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void validarDevolucion(Long cajaId, Map<String, BigDecimal> montosPorMetodo) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CajaServiceImpl.validarDevolucion");
+        log.debug("Inicio CajaServiceImpl.validarDevolucion");
         try {
             // El bloqueo se conserva hasta el fin de la transacción de venta o contrato que efectúa la devolución.
             var caja = buscarAbiertaParaActualizar(cajaId);
@@ -236,7 +236,7 @@ public class CajaServiceImpl implements CajaService {
             if (efectivo.signum() > 0 && calcular(caja).get("EFECTIVO").getEsperado().compareTo(efectivo) < 0)
                 throw new ReglaNegocioException("No hay efectivo suficiente en caja para la devolución");
         } finally {
-            log.info("Fin CajaServiceImpl.validarDevolucion | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CajaServiceImpl.validarDevolucion | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

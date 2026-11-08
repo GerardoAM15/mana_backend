@@ -28,6 +28,7 @@ class ContextoLocalServiceImplTest {
 
     @AfterEach void limpiar() {
         SecurityContextHolder.clearContext();
+        org.springframework.web.context.request.RequestContextHolder.resetRequestAttributes();
     }
 
     @ParameterizedTest
@@ -46,6 +47,16 @@ class ContextoLocalServiceImplTest {
         assertDoesNotThrow(() -> service.validarLocal(1L));
         assertThrows(AccessDeniedException.class, () -> service.localId(2L));
         assertThrows(AccessDeniedException.class, () -> service.validarLocal(2L));
+    }
+
+    @Test void cacheEsExclusivaDeLaPeticionYEvitaConsultasRepetidas() {
+        var service=preparar(RolUsuario.CAJERO);
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(new org.springframework.mock.web.MockHttpServletRequest()));
+        service.usuario(); service.localId(null); service.validarLocal(1L); service.localId(1L);
+        verify(usuarios,times(1)).findByCorreoIgnoreCase("actor@example.invalid"); verify(empleados,times(1)).findById(10L);
+        org.springframework.web.context.request.RequestContextHolder.setRequestAttributes(new org.springframework.web.context.request.ServletRequestAttributes(new org.springframework.mock.web.MockHttpServletRequest()));
+        service.localId(null);
+        verify(usuarios,times(2)).findByCorreoIgnoreCase("actor@example.invalid"); verify(empleados,times(2)).findById(10L);
     }
 
     private ContextoLocalServiceImpl preparar(RolUsuario rol) {

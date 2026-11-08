@@ -3,8 +3,32 @@
 spring:
   datasource:
     password: ${DB_PASSWORD}
+  # Correo de recuperación de contraseña con Gmail (RF40).
+  # 1. En la cuenta Gmail active la verificación en 2 pasos.
+  # 2. Cuenta de Google > Seguridad > Contraseñas de aplicaciones: genere una
+  #    clave de 16 caracteres (NO es la contraseña normal de Gmail).
+  # 3. Complete GMAIL_USUARIO y GMAIL_CLAVE_APP (o reemplácelos aquí).
+  # Sin estas líneas, en el perfil dev el enlace se escribe en el log.
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${GMAIL_USUARIO:}
+    password: ${GMAIL_CLAVE_APP:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
 app:
   jwt:
     secret: ${JWT_SECRET}
   admin:
     password: ${MANA_ADMIN_PASSWORD:}
+  # Token de https://apisperu.com (panel > Consulta DNI/RUC). Plan gratuito: 1000 consultas/mes.
+  apisperu:
+    token: ${APISPERU_TOKEN:}

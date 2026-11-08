@@ -52,7 +52,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional
     public UsuarioResponseDTO crear(UsuarioRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio UsuarioServiceImpl.crear");
+        log.debug("Inicio UsuarioServiceImpl.crear");
         try {
             var actual = bloquearGestion();
             validarGestion(actual, null, r.getRol());
@@ -67,14 +67,14 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuarios.saveAndFlush(u);
             return respuesta(u, actual);
         } finally {
-            log.info("Fin UsuarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin UsuarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public UsuarioResponseDTO actualizar(Long id, UsuarioRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio UsuarioServiceImpl.actualizar");
+        log.debug("Inicio UsuarioServiceImpl.actualizar");
         try {
             var actual = bloquearGestion();
             var u = usuarios.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
@@ -88,7 +88,7 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuarios.flush();
             return respuesta(u, actual);
         } finally {
-            log.info("Fin UsuarioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin UsuarioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -121,30 +121,30 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Transactional(readOnly = true)
     public UsuarioResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio UsuarioServiceImpl.buscar");
+        log.debug("Inicio UsuarioServiceImpl.buscar");
         try {
             return respuesta(obtener(id), contexto.usuario());
         } finally {
-            log.info("Fin UsuarioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin UsuarioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<UsuarioResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio UsuarioServiceImpl.listar");
+        log.debug("Inicio UsuarioServiceImpl.listar");
         try {
             var actual = contexto.usuario();
             return usuarios.findAll(org.springframework.data.domain.Sort.by("id")).stream().map(u -> respuesta(u, actual)).toList();
         } finally {
-            log.info("Fin UsuarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin UsuarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public UsuarioResponseDTO cambiarRol(Long id, RolRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio UsuarioServiceImpl.cambiarRol");
+        log.debug("Inicio UsuarioServiceImpl.cambiarRol");
         try {
             var actual = bloquearGestion();
             var u = usuarios.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
@@ -159,14 +159,14 @@ public class UsuarioServiceImpl implements UsuarioService {
             usuarios.flush();
             return respuesta(u, actual);
         } finally {
-            log.info("Fin UsuarioServiceImpl.cambiarRol | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin UsuarioServiceImpl.cambiarRol | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio UsuarioServiceImpl.eliminar");
+        log.debug("Inicio UsuarioServiceImpl.eliminar");
         try {
             var actual = bloquearGestion();
             var u = usuarios.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Usuario no encontrado"));
@@ -176,7 +176,7 @@ public class UsuarioServiceImpl implements UsuarioService {
             u.setActivo(false);
             u.setTokenVersion(u.getTokenVersion() + 1);
         } finally {
-            log.info("Fin UsuarioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin UsuarioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

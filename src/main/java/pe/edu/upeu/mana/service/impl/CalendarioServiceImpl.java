@@ -33,7 +33,7 @@ public class CalendarioServiceImpl implements CalendarioService {
     @Transactional
     public DiaNoAtencionResponseDTO crear(DiaNoAtencionRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CalendarioServiceImpl.crear");
+        log.debug("Inicio CalendarioServiceImpl.crear");
         try {
             var e = new DiaNoAtencion();
             e.setLocalId(contexto.localId(null));
@@ -41,14 +41,14 @@ public class CalendarioServiceImpl implements CalendarioService {
             e.setMotivo(r.getMotivo());
             return mapper.toResponse(dias.saveAndFlush(e));
         } finally {
-            log.info("Fin CalendarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CalendarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public DiaNoAtencionResponseDTO actualizar(Long id, DiaNoAtencionRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CalendarioServiceImpl.actualizar");
+        log.debug("Inicio CalendarioServiceImpl.actualizar");
         try {
             var e = obtener(id);
             e.setFecha(r.getFecha());
@@ -56,31 +56,31 @@ public class CalendarioServiceImpl implements CalendarioService {
             dias.flush();
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin CalendarioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CalendarioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<DiaNoAtencionResponseDTO> listar(Long localId, LocalDate desde, LocalDate hasta) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CalendarioServiceImpl.listar");
+        log.debug("Inicio CalendarioServiceImpl.listar");
         try {
             if (desde != null && hasta != null && desde.isAfter(hasta))
                 throw new DatosInvalidosException("El inicio no puede ser posterior al fin");
             return dias.filtrar(contexto.localId(localId), desde, hasta).stream().map(mapper::toResponse).toList();
         } finally {
-            log.info("Fin CalendarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CalendarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio CalendarioServiceImpl.eliminar");
+        log.debug("Inicio CalendarioServiceImpl.eliminar");
         try {
             dias.delete(obtener(id));
         } finally {
-            log.info("Fin CalendarioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin CalendarioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

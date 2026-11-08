@@ -65,7 +65,7 @@ public class InventarioServiceImpl implements InventarioService {
     @Transactional
     public CompraBebidaResponseDTO crear(CompraBebidaRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio InventarioServiceImpl.crear");
+        log.debug("Inicio InventarioServiceImpl.crear");
         try {
             Long local = contexto.localId(null);
             var proveedor = proveedores.buscarParaActualizar(r.getProveedorId()).orElseThrow(() -> new RecursoNoEncontradoException("Proveedor no encontrado"));
@@ -105,7 +105,7 @@ public class InventarioServiceImpl implements InventarioService {
             log.info("Compra registrada | compra={} | usuario={} | total={}", compra.getId(), contexto.usuario().getCorreo(), total);
             return respuesta(compra);
         } finally {
-            log.info("Fin InventarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin InventarioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -123,49 +123,49 @@ public class InventarioServiceImpl implements InventarioService {
     @Transactional(readOnly = true)
     public CompraBebidaResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio InventarioServiceImpl.buscar");
+        log.debug("Inicio InventarioServiceImpl.buscar");
         try {
             var c = compras.findById(id).orElseThrow(() -> new RecursoNoEncontradoException("Compra no encontrada"));
             contexto.validarLocal(c.getLocalId());
             return respuesta(c);
         } finally {
-            log.info("Fin InventarioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin InventarioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<CompraBebidaResponseDTO> listar(Long local, LocalDate desde, LocalDate hasta) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio InventarioServiceImpl.listar");
+        log.debug("Inicio InventarioServiceImpl.listar");
         try {
             validarRango(desde, hasta);
             return compras.filtrar(contexto.localId(local), desde, hasta).stream().map(this::respuesta).toList();
         } finally {
-            log.info("Fin InventarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin InventarioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<StockBebidaResponseDTO> listarStock(Long local) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio InventarioServiceImpl.listarStock");
+        log.debug("Inicio InventarioServiceImpl.listarStock");
         try {
             return stockRepository.listarStock(contexto.localId(local));
         } finally {
-            log.info("Fin InventarioServiceImpl.listarStock | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin InventarioServiceImpl.listarStock | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PaginaResponseDTO<MovimientoStockResponseDTO> listarMovimientos(Long localId, Long bebidaId, LocalDate desde, LocalDate hasta, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
-        log.info("Inicio InventarioServiceImpl.listarMovimientos");
+        log.debug("Inicio InventarioServiceImpl.listarMovimientos");
         try {
             var pageable = PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
             validarRango(desde, hasta);
             return PaginaResponseDTO.de(movimientos.filtrar(contexto.localId(localId), bebidaId, desde == null ? null : desde.atStartOfDay(), hasta == null ? null : hasta.plusDays(1).atStartOfDay(), pageable));
         } finally {
-            log.info("Fin InventarioServiceImpl.listarMovimientos | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
+            log.debug("Fin InventarioServiceImpl.listarMovimientos | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }
     }
 

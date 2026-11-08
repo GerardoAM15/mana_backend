@@ -52,9 +52,12 @@ public class AuthServiceImpl implements AuthService {
 
     private final String frontendUrl;
 
+    private final pe.edu.upeu.mana.security.LimitadorIntentos intentos;
+
     private final SecureRandom random = new SecureRandom();
 
-    public AuthServiceImpl(UsuarioRepository usuarios, EmpleadoRepository empleados, LocalRepository locales, TokenRestablecimientoRepository tokens, PasswordEncoder encoder, JwtService jwt, UsuarioMapper mapper, Clock clock, ObjectProvider<JavaMailSender> correo, Environment environment, @Value("${app.frontend-url:http://localhost:4200}") String frontendUrl) {
+    public AuthServiceImpl(UsuarioRepository usuarios, EmpleadoRepository empleados, LocalRepository locales, TokenRestablecimientoRepository tokens, PasswordEncoder encoder, JwtService jwt, UsuarioMapper mapper, Clock clock, ObjectProvider<JavaMailSender> correo, Environment environment, @Value("${app.frontend-url:http://localhost:4200}") String frontendUrl, pe.edu.upeu.mana.security.LimitadorIntentos intentos) {
+        this.intentos = intentos;
         this.usuarios = usuarios;
         this.empleados = empleados;
         this.locales = locales;
@@ -71,8 +74,10 @@ public class AuthServiceImpl implements AuthService {
     @Transactional(readOnly = true)
     public LoginResponseDTO login(LoginRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio AuthServiceImpl.login");
+        log.debug("Inicio AuthServiceImpl.login");
         try {
+            String ip = ipActual();
+            intentos.iniciarLogin(r.getCorreo(), ip);
             var u = usuarios.findByCorreoIgnoreCase(r.getCorreo().trim()).orElse(null);
             // El hash de reserva evita omitir BCrypt cuando el correo no existe.
             String hash = u == null ? "$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy" : u.getClaveHash();
@@ -85,33 +90,38 @@ public class AuthServiceImpl implements AuthService {
             var l = locales.findById(e.getLocalId()).orElseThrow(this::credenciales);
             if (!Boolean.TRUE.equals(l.getActivo()))
                 throw credenciales();
+            intentos.loginExitoso(r.getCorreo(), ip);
             return mapper.toResponse(u, e, l, jwt.generarToken(u), JwtService.EXPIRA_EN_SEGUNDOS);
         } finally {
-            log.info("Fin AuthServiceImpl.login | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin AuthServiceImpl.login | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public LoginResponseDTO buscarActual(String correo) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio AuthServiceImpl.buscarActual");
+        log.debug("Inicio AuthServiceImpl.buscarActual");
         try {
             var u = usuarios.findByCorreoIgnoreCase(correo).orElseThrow(this::credenciales);
             var e = empleados.findById(u.getEmpleadoId()).orElseThrow(this::credenciales);
             return mapper.toResponse(u, e, locales.findById(e.getLocalId()).orElseThrow(this::credenciales), null, null);
         } finally {
-            log.info("Fin AuthServiceImpl.buscarActual | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin AuthServiceImpl.buscarActual | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void recuperar(RecuperarClaveRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio AuthServiceImpl.recuperar");
+        log.debug("Inicio AuthServiceImpl.recuperar");
         try {
+            intentos.recuperar(r.getCorreo());
             var u = usuarios.findByCorreoIgnoreCase(r.getCorreo().trim()).orElse(null);
             if (u == null || !Boolean.TRUE.equals(u.getActivo()))
                 return;
+            u = usuarios.buscarParaActualizar(u.getId()).orElseThrow(this::credenciales);
+            if (!Boolean.TRUE.equals(u.getActivo())) return;
+            tokens.invalidarPendientes(u.getId());
             byte[] bytes = new byte[32];
             random.nextBytes(bytes);
             String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
@@ -134,35 +144,57 @@ public class AuthServiceImpl implements AuthService {
             }
             try {
                 var mensaje = new SimpleMailMessage();
+                // Gmail exige que el remitente sea la cuenta autenticada (spring.mail.username).
+                String remitente = environment.getProperty("spring.mail.username", "");
+                if (!remitente.isBlank())
+                    mensaje.setFrom("MANÁ <" + remitente + ">");
                 mensaje.setTo(u.getCorreo());
                 mensaje.setSubject("MANÁ: restablecer contraseña");
-                mensaje.setText("El enlace vence en 5 minutos: " + enlace);
+                mensaje.setText("""
+                        Hola,
+
+                        Recibimos una solicitud para restablecer la contraseña de su cuenta en MANÁ.
+                        Abra este enlace para elegir una nueva contraseña (vence en 5 minutos y sirve una sola vez):
+
+                        %s
+
+                        Si usted no lo pidió, ignore este correo: su contraseña actual sigue siendo válida.
+                        """.formatted(enlace));
                 sender.send(mensaje);
             } catch (org.springframework.mail.MailException ex) {
-                log.warn("No se pudo enviar el correo de recuperación");
+                log.warn("No se pudo enviar el correo de recuperación | error={}", ex.getClass().getSimpleName());
             }
         } finally {
-            log.info("Fin AuthServiceImpl.recuperar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin AuthServiceImpl.recuperar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void restablecer(RestablecerClaveRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio AuthServiceImpl.restablecer");
+        log.debug("Inicio AuthServiceImpl.restablecer");
         try {
-            var t = tokens.buscarPorHashParaActualizar(hash(r.getToken())).orElseThrow(() -> new DatosInvalidosException("Token inválido o vencido"));
+            String tokenHash = hash(r.getToken());
+            Long usuarioId = tokens.buscarUsuarioIdPorHash(tokenHash).orElseThrow(() -> new DatosInvalidosException("Token inválido o vencido"));
+            // Mismo orden que recuperar: usuario primero, luego sus tokens.
+            var u = usuarios.buscarParaActualizar(usuarioId).orElseThrow(this::credenciales);
+            var t = tokens.buscarPorHashParaActualizar(tokenHash).orElseThrow(() -> new DatosInvalidosException("Token inválido o vencido"));
             if (Boolean.TRUE.equals(t.getUsado()) || !t.getExpiraEn().isAfter(OffsetDateTime.now(clock)))
                 throw new DatosInvalidosException("Token inválido o vencido");
-            var u = usuarios.buscarParaActualizar(t.getUsuarioId()).orElseThrow(this::credenciales);
             if (!Boolean.TRUE.equals(u.getActivo()))
                 throw new DatosInvalidosException("Token inválido o vencido");
             u.setClaveHash(encoder.encode(r.getNuevaClave()));
             u.setTokenVersion(u.getTokenVersion() + 1);
             t.setUsado(true);
         } finally {
-            log.info("Fin AuthServiceImpl.restablecer | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin AuthServiceImpl.restablecer | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
+    }
+
+    private String ipActual() {
+        var atributos = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        return atributos instanceof org.springframework.web.context.request.ServletRequestAttributes servlet
+                ? servlet.getRequest().getRemoteAddr() : "sin-request";
     }
 
     private BadCredentialsException credenciales() {

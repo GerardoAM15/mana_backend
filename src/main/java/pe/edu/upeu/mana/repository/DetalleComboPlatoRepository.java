@@ -7,6 +7,8 @@ import org.springframework.data.repository.query.Param;
 import pe.edu.upeu.mana.entity.*;
 
 public interface DetalleComboPlatoRepository extends JpaRepository<DetalleComboPlato, DetalleComboPlatoId> {
+    java.util.List<DetalleComboPlato> findByDetalleIdInOrderByPlatoId(java.util.Collection<Long> ids);
+
 
     java.util.List<DetalleComboPlato> findByDetalleIdOrderByPlatoId(Long detalleId);
 

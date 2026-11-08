@@ -24,47 +24,61 @@ public class ContextoLocalServiceImpl implements ContextoLocalService {
         this.empleados = empleados;
     }
 
+    private jakarta.servlet.http.HttpServletRequest request() {
+        var atributos = org.springframework.web.context.request.RequestContextHolder.getRequestAttributes();
+        return atributos instanceof org.springframework.web.context.request.ServletRequestAttributes servlet ? servlet.getRequest() : null;
+    }
+
     @Transactional(readOnly = true)
     public Usuario usuario() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContextoLocalServiceImpl.usuario");
+        log.debug("Inicio ContextoLocalServiceImpl.usuario");
         try {
             var auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth == null || !auth.isAuthenticated())
                 throw new BadCredentialsException("Autenticación requerida");
-            return usuarios.findByCorreoIgnoreCase(auth.getName()).orElseThrow(() -> new BadCredentialsException("Usuario inválido"));
+            var request = request();
+            String clave = "mana.usuario:" + auth.getName();
+            if (request != null && request.getAttribute(clave) instanceof Usuario cached) return cached;
+            var usuario = usuarios.findByCorreoIgnoreCase(auth.getName()).orElseThrow(() -> new BadCredentialsException("Usuario inválido"));
+            if (request != null) request.setAttribute(clave, usuario);
+            return usuario;
         } finally {
-            log.info("Fin ContextoLocalServiceImpl.usuario | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContextoLocalServiceImpl.usuario | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public Long localId(Long filtro) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContextoLocalServiceImpl.localId");
+        log.debug("Inicio ContextoLocalServiceImpl.localId");
         try {
             var u = usuario();
-            var e = empleados.findById(u.getEmpleadoId()).orElseThrow(() -> new BadCredentialsException("Empleado inválido"));
+            var request = request();
+            String clave = "mana.empleado:" + u.getEmpleadoId();
+            var e = request != null && request.getAttribute(clave) instanceof Empleado cached ? cached
+                    : empleados.findById(u.getEmpleadoId()).orElseThrow(() -> new BadCredentialsException("Empleado inválido"));
+            if (request != null) request.setAttribute(clave, e);
             if (filtro == null)
                 return e.getLocalId();
             if (!PermisosPorRol.esAdministradorODueno(u.getRol()) && !filtro.equals(e.getLocalId()))
                 throw new AccessDeniedException("El local no corresponde al usuario");
             return filtro;
         } finally {
-            log.info("Fin ContextoLocalServiceImpl.localId | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContextoLocalServiceImpl.localId | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public void validarLocal(Long localId) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContextoLocalServiceImpl.validarLocal");
+        log.debug("Inicio ContextoLocalServiceImpl.validarLocal");
         try {
             var u = usuario();
             if (!PermisosPorRol.esAdministradorODueno(u.getRol()) && !localId.equals(localId(null)))
                 throw new AccessDeniedException("El local no corresponde al usuario");
         } finally {
-            log.info("Fin ContextoLocalServiceImpl.validarLocal | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContextoLocalServiceImpl.validarLocal | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

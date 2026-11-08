@@ -34,7 +34,7 @@ public class PrecioSueltoServiceImpl implements PrecioSueltoService {
     @Transactional
     public PrecioSueltoResponseDTO crear(PrecioSueltoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PrecioSueltoServiceImpl.crear");
+        log.debug("Inicio PrecioSueltoServiceImpl.crear");
         try {
             validar(r);
             if (precios.existsById(new PrecioSueltoId(r.getServicio(), r.getCategoria())))
@@ -44,14 +44,14 @@ public class PrecioSueltoServiceImpl implements PrecioSueltoService {
             precios.saveAndFlush(e);
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin PrecioSueltoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PrecioSueltoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public PrecioSueltoResponseDTO actualizar(String servicio, String categoria, PrecioSueltoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PrecioSueltoServiceImpl.actualizar");
+        log.debug("Inicio PrecioSueltoServiceImpl.actualizar");
         try {
             if (!servicio.equals(r.getServicio()) || !categoria.equals(r.getCategoria()))
                 throw new DatosInvalidosException("La clave del precio no se puede cambiar");
@@ -61,29 +61,29 @@ public class PrecioSueltoServiceImpl implements PrecioSueltoService {
             precios.flush();
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin PrecioSueltoServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PrecioSueltoServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<PrecioSueltoResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PrecioSueltoServiceImpl.listar");
+        log.debug("Inicio PrecioSueltoServiceImpl.listar");
         try {
             return precios.findAll(org.springframework.data.domain.Sort.by("servicio", "categoria")).stream().map(mapper::toResponse).toList();
         } finally {
-            log.info("Fin PrecioSueltoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PrecioSueltoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(String servicio, String categoria) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PrecioSueltoServiceImpl.eliminar");
+        log.debug("Inicio PrecioSueltoServiceImpl.eliminar");
         try {
             obtener(servicio, categoria).setActivo(false);
         } finally {
-            log.info("Fin PrecioSueltoServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PrecioSueltoServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

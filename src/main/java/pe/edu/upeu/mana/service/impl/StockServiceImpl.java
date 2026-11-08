@@ -33,7 +33,7 @@ public class StockServiceImpl implements StockService {
     @Transactional(propagation = Propagation.MANDATORY)
     public Map<Long, StockBebida> bloquear(Long localId, Collection<Long> ids, boolean crear) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio StockServiceImpl.bloquear");
+        log.debug("Inicio StockServiceImpl.bloquear");
         try {
             var resultado = new TreeMap<Long, StockBebida>();
             // Los bloqueos de bebida serializan la creación de filas de stock inexistentes.
@@ -56,14 +56,14 @@ public class StockServiceImpl implements StockService {
             }
             return resultado;
         } finally {
-            log.info("Fin StockServiceImpl.bloquear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin StockServiceImpl.bloquear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public void mover(StockBebida stock, TipoMovimientoStock tipo, long cantidad, Long compra, Long orden, String motivo) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio StockServiceImpl.mover");
+        log.debug("Inicio StockServiceImpl.mover");
         try {
             if (cantidad <= 0 || cantidad > 9999999999L)
                 throw new ReglaNegocioException("Cantidad de stock fuera de rango");
@@ -84,7 +84,7 @@ public class StockServiceImpl implements StockService {
             m.setMotivo(motivo);
             movimientos.save(m);
         } finally {
-            log.info("Fin StockServiceImpl.mover | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin StockServiceImpl.mover | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

@@ -32,7 +32,7 @@ public class TarifaServicioServiceImpl implements TarifaServicioService {
     @Transactional
     public TarifaServicioResponseDTO crear(TarifaServicioRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio TarifaServicioServiceImpl.crear");
+        log.debug("Inicio TarifaServicioServiceImpl.crear");
         try {
             var e = new TarifaServicio();
             validar(e, r);
@@ -40,14 +40,14 @@ public class TarifaServicioServiceImpl implements TarifaServicioService {
             repository.saveAndFlush(e);
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin TarifaServicioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin TarifaServicioServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public TarifaServicioResponseDTO actualizar(Long id, TarifaServicioRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio TarifaServicioServiceImpl.actualizar");
+        log.debug("Inicio TarifaServicioServiceImpl.actualizar");
         try {
             var e = obtener(id);
             validar(e, r);
@@ -55,40 +55,40 @@ public class TarifaServicioServiceImpl implements TarifaServicioService {
             repository.flush();
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin TarifaServicioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin TarifaServicioServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public TarifaServicioResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio TarifaServicioServiceImpl.buscar");
+        log.debug("Inicio TarifaServicioServiceImpl.buscar");
         try {
             return mapper.toResponse(obtener(id));
         } finally {
-            log.info("Fin TarifaServicioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin TarifaServicioServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<TarifaServicioResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio TarifaServicioServiceImpl.listar");
+        log.debug("Inicio TarifaServicioServiceImpl.listar");
         try {
             return repository.findAll(Sort.by("id")).stream().map(mapper::toResponse).toList();
         } finally {
-            log.info("Fin TarifaServicioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin TarifaServicioServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio TarifaServicioServiceImpl.eliminar");
+        log.debug("Inicio TarifaServicioServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin TarifaServicioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin TarifaServicioServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

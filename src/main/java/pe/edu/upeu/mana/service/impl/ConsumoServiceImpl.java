@@ -37,9 +37,9 @@ public class ConsumoServiceImpl implements ConsumoService {
 
     private final PlatoRepository platos;
 
-    private final ServicioDiaAtencionRepository dias;
+    private final ValidadorAtencion atencion;
 
-    private final DiaNoAtencionRepository cierres;
+
 
     private final ServicioRepository servicios;
 
@@ -57,14 +57,13 @@ public class ConsumoServiceImpl implements ConsumoService {
 
     private final Clock clock;
 
-    public ConsumoServiceImpl(ContratoRepository contratos, DetalleContratoRepository detallesContrato, ConsumoRepository consumos, DetalleConsumoRepository detallesConsumo, PlatoRepository platos, ServicioDiaAtencionRepository dias, DiaNoAtencionRepository cierres, ServicioRepository servicios, MetodoPagoRepository metodos, ContextoLocalService contexto, CajaService cajas, ValidadorMenu menus, EstadoContratoActual estados, ConsumoMapper mapper, Clock clock) {
+    public ConsumoServiceImpl(ContratoRepository contratos, DetalleContratoRepository detallesContrato, ConsumoRepository consumos, DetalleConsumoRepository detallesConsumo, PlatoRepository platos, ValidadorAtencion atencion, ServicioRepository servicios, MetodoPagoRepository metodos, ContextoLocalService contexto, CajaService cajas, ValidadorMenu menus, EstadoContratoActual estados, ConsumoMapper mapper, Clock clock) {
         this.contratos = contratos;
         this.detallesContrato = detallesContrato;
         this.consumos = consumos;
         this.detallesConsumo = detallesConsumo;
         this.platos = platos;
-        this.dias = dias;
-        this.cierres = cierres;
+        this.atencion = atencion;
         this.servicios = servicios;
         this.metodos = metodos;
         this.contexto = contexto;
@@ -78,21 +77,26 @@ public class ConsumoServiceImpl implements ConsumoService {
     @Transactional(readOnly = true)
     public pe.edu.upeu.mana.dto.PaginaResponseDTO<ConsumoResponseDTO> listar(Long contratoId, String servicio, LocalDate desde, LocalDate hasta, Long localId, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
-        log.info("Inicio ConsumoServiceImpl.listar");
+        log.debug("Inicio ConsumoServiceImpl.listar");
         try {
             if (desde != null && hasta != null && desde.isAfter(hasta))
                 throw new DatosInvalidosException("Rango de fechas inválido");
             var pageable = pe.edu.upeu.mana.util.PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
-            return pe.edu.upeu.mana.dto.PaginaResponseDTO.de(consumos.filtrar(contexto.localId(localId), contratoId, servicio, desde, hasta, pageable).map(c -> respuesta(c, detallesContrato.findById(c.getDetalleContratoId()).orElseThrow(() -> new RecursoNoEncontradoException("Detalle no encontrado")))));
+            var paginaConsumos = consumos.filtrar(contexto.localId(localId), contratoId, servicio, desde, hasta, pageable);
+            var contratosMap = detallesContrato.findAllById(paginaConsumos.stream().map(Consumo::getDetalleContratoId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(DetalleContrato::getId, d -> d));
+            var lineas = detallesConsumo.findByConsumoIdInOrderById(paginaConsumos.stream().map(Consumo::getId).toList());
+            var catalogo = platos.findAllById(lineas.stream().map(DetalleConsumo::getPlatoId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(Plato::getId, p -> p));
+            var porConsumo = lineas.stream().collect(Collectors.groupingBy(DetalleConsumo::getConsumoId));
+            return pe.edu.upeu.mana.dto.PaginaResponseDTO.de(paginaConsumos.map(c -> mapper.toResponse(c, contratosMap.get(c.getDetalleContratoId()), porConsumo.getOrDefault(c.getId(), List.of()), catalogo)));
         } finally {
-            log.info("Fin ConsumoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
+            log.debug("Fin ConsumoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }
     }
 
     @Transactional
     public ConsumoResponseDTO crear(ConsumoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ConsumoServiceImpl.crear");
+        log.debug("Inicio ConsumoServiceImpl.crear");
         try {
             var hoy = LocalDate.now(clock);
             Long local = contexto.localId(null);
@@ -114,7 +118,7 @@ public class ConsumoServiceImpl implements ConsumoService {
                 throw new ReglaNegocioException("El contrato no corresponde al local");
             if (estados.calcular(contrato) != EstadoContrato.ACTIVO || hoy.isBefore(contrato.getFechaInicio()) || hoy.isAfter(contrato.getFechaFin()))
                 throw new ReglaNegocioException("El contrato no está activo para hoy");
-            validarAtencion(local, hoy, r.getServicio());
+            atencion.validar(local, hoy, r.getServicio());
             var detalle = detallesContrato.buscarServicioParaActualizar(contrato.getId(), r.getServicio()).orElseThrow(() -> new ReglaNegocioException("El contrato no incluye ese servicio"));
             if (detalle.getSaldoRaciones() <= 0)
                 throw new ReglaNegocioException("No quedan raciones para ese servicio");
@@ -152,24 +156,15 @@ public class ConsumoServiceImpl implements ConsumoService {
             log.info("Consumo registrado | contrato={} | consumo={} | usuario={} | recargo={}", contrato.getNumero(), c.getId(), contexto.usuario().getCorreo(), recargo);
             return mapper.toResponse(c, detalle, lineas, seleccion);
         } finally {
-            log.info("Fin ConsumoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ConsumoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
-    private void validarAtencion(Long local, LocalDate hoy, String servicio) {
-        var s = servicios.findById(servicio).orElseThrow(() -> new RecursoNoEncontradoException("Servicio no encontrado"));
-        if (!Boolean.TRUE.equals(s.getActivo()))
-            throw new ReglaNegocioException("El servicio está inactivo");
-        if (cierres.existsByLocalIdAndFecha(local, hoy))
-            throw new ReglaNegocioException("Hoy no hay atención en el local por feriado o cierre");
-        if (!dias.existsById(new ServicioDiaAtencionId(servicio, hoy.getDayOfWeek().getValue())))
-            throw new ReglaNegocioException("El servicio " + s.getNombre() + " no se atiende los " + hoy.getDayOfWeek().getDisplayName(TextStyle.FULL, Locale.forLanguageTag("es")));
-    }
 
     @Transactional
     public ConsumoResponseDTO anular(Long id, AnularRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ConsumoServiceImpl.anular");
+        log.debug("Inicio ConsumoServiceImpl.anular");
         try {
             String motivo = r.getMotivo().trim();
             if (motivo.length() < 10 || motivo.length() > 250)
@@ -185,6 +180,8 @@ public class ConsumoServiceImpl implements ConsumoService {
                 throw new ReglaNegocioException("El consumo ya está anulado");
             if (!c.getFecha().equals(LocalDate.now(clock)))
                 throw new ReglaNegocioException("Solo puede anular consumos de hoy");
+            if (c.getRecargoLlevar().signum() > 0)
+                cajas.validarDevolucion(c.getCajaId(), Map.of(c.getMetodoRecargo(), c.getRecargoLlevar()));
             c.setAnulado(true);
             c.setAnuladoEn(LocalDateTime.now(clock));
             c.setMotivoAnulacion(motivo);
@@ -194,21 +191,21 @@ public class ConsumoServiceImpl implements ConsumoService {
             log.info("Consumo anulado | contrato={} | consumo={} | usuario={} | recargo={}", contrato.getNumero(), id, contexto.usuario().getCorreo(), c.getRecargoLlevar());
             return respuesta(c, detalle);
         } finally {
-            log.info("Fin ConsumoServiceImpl.anular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ConsumoServiceImpl.anular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<ConsumoResponseDTO> listarPorContrato(Long contratoId) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ConsumoServiceImpl.listarPorContrato");
+        log.debug("Inicio ConsumoServiceImpl.listarPorContrato");
         try {
             var contrato = contratos.findById(contratoId).orElseThrow(() -> new RecursoNoEncontradoException("Contrato no encontrado"));
             contexto.validarLocal(contrato.getLocalId());
             var detalles = detallesContrato.findByContratoIdOrderById(contratoId).stream().collect(Collectors.toMap(DetalleContrato::getId, d -> d));
             return consumos.buscarPorContrato(contratoId).stream().map(c -> respuesta(c, detalles.get(c.getDetalleContratoId()))).toList();
         } finally {
-            log.info("Fin ConsumoServiceImpl.listarPorContrato | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ConsumoServiceImpl.listarPorContrato | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

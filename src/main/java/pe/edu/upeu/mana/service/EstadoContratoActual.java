@@ -4,7 +4,6 @@ import java.time.*;
 import org.springframework.stereotype.Component;
 import pe.edu.upeu.mana.entity.Contrato;
 import pe.edu.upeu.mana.enums.EstadoContrato;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class EstadoContratoActual {
@@ -17,10 +16,9 @@ public class EstadoContratoActual {
         this.clock = clock;
     }
 
-    @Transactional(readOnly = true)
     public EstadoContrato calcular(Contrato c) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio EstadoContratoActual.calcular");
+        log.debug("Inicio EstadoContratoActual.calcular");
         try {
             if (c.getEstado() == EstadoContrato.ANULADO || c.getEstado() == EstadoContrato.FINALIZADO)
                 return c.getEstado();
@@ -29,7 +27,7 @@ public class EstadoContratoActual {
                 return EstadoContrato.FINALIZADO;
             return c.getFechaInicio().isAfter(hoy) ? EstadoContrato.PROGRAMADO : EstadoContrato.ACTIVO;
         } finally {
-            log.info("Fin EstadoContratoActual.calcular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin EstadoContratoActual.calcular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

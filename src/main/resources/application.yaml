@@ -19,6 +19,11 @@ app:
   zona-horaria: America/Lima
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
+  # Consulta DNI/RUC (APIsPERU). Sin token, el autocompletado responde 503
+  # y los formularios se llenan a mano.
+  apisperu:
+    url: ${APISPERU_URL:https://dniruc.apisperu.com/api/v1}
+    token: ${APISPERU_TOKEN:}
 springdoc:
   swagger-ui:
     path: /swagger-ui.html

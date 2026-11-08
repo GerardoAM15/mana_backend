@@ -91,7 +91,7 @@ class ConsumoServiceImplTest {
     }
 
     private ConsumoServiceImpl crearServicio(Clock reloj) {
-        return new ConsumoServiceImpl(contratos, detallesContrato, consumos, detallesConsumo, platos, dias, cierres, servicios, metodos, contexto, cajas, menus, new EstadoContratoActual(reloj), mapper, reloj);
+        return new ConsumoServiceImpl(contratos, detallesContrato, consumos, detallesConsumo, platos, new ValidadorAtencion(servicios, dias, cierres), servicios, metodos, contexto, cajas, menus, new EstadoContratoActual(reloj), mapper, reloj);
     }
 
     private void base(String servicio, boolean atiende) {
@@ -177,6 +177,7 @@ class ConsumoServiceImplTest {
         when(detallesContrato.buscarParaActualizar(3L)).thenReturn(Optional.of(detalle));
         var c = new Consumo();
         c.setId(8L);
+        c.setRecargoLlevar(BigDecimal.ZERO);
         c.setFecha(LocalDate.parse("2026-11-02"));
         c.setClaveDiaria("2:2026-11-02:A");
         when(consumos.buscarParaActualizar(8L)).thenReturn(Optional.of(c));
@@ -188,6 +189,24 @@ class ConsumoServiceImplTest {
         assertTrue(c.getAnulado());
         assertNull(c.getClaveDiaria());
         assertNotNull(c.getAnuladoEn());
+    }
+
+    @Test void anularRecargoSinEfectivoNoModificaElConsumoNiElSaldo() {
+        var ubicacion = mock(ConsumoRepository.UbicacionConsumo.class);
+        when(ubicacion.getContratoId()).thenReturn(1L);
+        when(ubicacion.getDetalleId()).thenReturn(3L);
+        when(ubicacion.getCajaId()).thenReturn(5L);
+        when(consumos.buscarUbicacion(8L)).thenReturn(Optional.of(ubicacion));
+        when(contratos.buscarParaActualizar(1L)).thenReturn(Optional.of(contrato));
+        when(detallesContrato.buscarParaActualizar(3L)).thenReturn(Optional.of(detalle));
+        var c = new Consumo(); c.setFecha(LocalDate.now(clock)); c.setCajaId(5L);
+        c.setRecargoLlevar(new BigDecimal("2.00")); c.setMetodoRecargo("EFECTIVO"); c.setAnulado(false);
+        when(consumos.buscarParaActualizar(8L)).thenReturn(Optional.of(c));
+        doThrow(new ReglaNegocioException("No hay efectivo suficiente en caja para la devolución"))
+                .when(cajas).validarDevolucion(5L, Map.of("EFECTIVO",new BigDecimal("2.00")));
+        assertEquals("No hay efectivo suficiente en caja para la devolución",assertThrows(ReglaNegocioException.class,
+                () -> service.anular(8L,new AnularRequestDTO("Corrección de consumo"))).getMessage());
+        assertFalse(c.getAnulado()); assertEquals(1L,detalle.getSaldoRaciones()); verify(consumos,never()).flush();
     }
 
     private ConsumoRequestDTO request(String s) {

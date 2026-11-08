@@ -33,7 +33,7 @@ public class PlanServiceImpl implements PlanService {
     @Transactional
     public PlanResponseDTO crear(PlanRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlanServiceImpl.crear");
+        log.debug("Inicio PlanServiceImpl.crear");
         try {
             validar(r);
             var e = new TipoPlan();
@@ -42,14 +42,14 @@ public class PlanServiceImpl implements PlanService {
             vincular(e, r);
             return respuesta(e);
         } finally {
-            log.info("Fin PlanServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlanServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public PlanResponseDTO actualizar(Long id, PlanRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlanServiceImpl.actualizar");
+        log.debug("Inicio PlanServiceImpl.actualizar");
         try {
             validar(r);
             var e = repository.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Registro no encontrado"));
@@ -58,40 +58,40 @@ public class PlanServiceImpl implements PlanService {
             repository.flush();
             return respuesta(e);
         } finally {
-            log.info("Fin PlanServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlanServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PlanResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlanServiceImpl.buscar");
+        log.debug("Inicio PlanServiceImpl.buscar");
         try {
             return respuesta(obtener(id));
         } finally {
-            log.info("Fin PlanServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlanServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<PlanResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlanServiceImpl.listar");
+        log.debug("Inicio PlanServiceImpl.listar");
         try {
             return repository.findAll(org.springframework.data.domain.Sort.by("id")).stream().map(this::respuesta).toList();
         } finally {
-            log.info("Fin PlanServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlanServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlanServiceImpl.eliminar");
+        log.debug("Inicio PlanServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin PlanServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlanServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

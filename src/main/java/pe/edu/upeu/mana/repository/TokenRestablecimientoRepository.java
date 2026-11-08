@@ -8,6 +8,13 @@ import pe.edu.upeu.mana.entity.*;
 
 public interface TokenRestablecimientoRepository extends JpaRepository<TokenRestablecimiento, Long> {
 
+    @Query("select t.usuarioId from TokenRestablecimiento t where t.tokenHash = :hash")
+    Optional<Long> buscarUsuarioIdPorHash(@Param("hash") String hash);
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update TokenRestablecimiento t set t.usado = true where t.usuarioId = :usuarioId and t.usado = false")
+    int invalidarPendientes(@Param("usuarioId") Long usuarioId);
+
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select t from TokenRestablecimiento t where t.tokenHash = :hash")
     Optional<TokenRestablecimiento> buscarPorHashParaActualizar(@Param("hash") String hash);

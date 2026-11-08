@@ -37,7 +37,7 @@ public class ReglaCobroServiceImpl implements ReglaCobroService {
     @Transactional
     public ReglaCobroResponseDTO crear(ReglaCobroRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReglaCobroServiceImpl.crear");
+        log.debug("Inicio ReglaCobroServiceImpl.crear");
         try {
             validar(r, null);
             var e = new ReglaCobro();
@@ -46,14 +46,14 @@ public class ReglaCobroServiceImpl implements ReglaCobroService {
             vincular(e, r);
             return respuesta(e);
         } finally {
-            log.info("Fin ReglaCobroServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReglaCobroServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public ReglaCobroResponseDTO actualizar(Long id, ReglaCobroRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReglaCobroServiceImpl.actualizar");
+        log.debug("Inicio ReglaCobroServiceImpl.actualizar");
         try {
             validar(r, id);
             var e = repository.buscarParaActualizar(id).orElseThrow(() -> new RecursoNoEncontradoException("Registro no encontrado"));
@@ -62,40 +62,40 @@ public class ReglaCobroServiceImpl implements ReglaCobroService {
             repository.flush();
             return respuesta(e);
         } finally {
-            log.info("Fin ReglaCobroServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReglaCobroServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public ReglaCobroResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReglaCobroServiceImpl.buscar");
+        log.debug("Inicio ReglaCobroServiceImpl.buscar");
         try {
             return respuesta(obtener(id));
         } finally {
-            log.info("Fin ReglaCobroServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReglaCobroServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<ReglaCobroResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReglaCobroServiceImpl.listar");
+        log.debug("Inicio ReglaCobroServiceImpl.listar");
         try {
             return repository.findAll(org.springframework.data.domain.Sort.by("id")).stream().map(this::respuesta).toList();
         } finally {
-            log.info("Fin ReglaCobroServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReglaCobroServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReglaCobroServiceImpl.eliminar");
+        log.debug("Inicio ReglaCobroServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin ReglaCobroServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReglaCobroServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

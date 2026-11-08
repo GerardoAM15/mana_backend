@@ -90,6 +90,16 @@ public class GlobalExceptionHandler {
         return error(HttpStatus.FORBIDDEN, mensaje, req);
     }
 
+    @ExceptionHandler(DemasiadosIntentosException.class)
+    ResponseEntity<ErrorResponseDTO> limite(DemasiadosIntentosException ex, HttpServletRequest req) {
+        return error(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage(), req);
+    }
+
+    @ExceptionHandler(ServicioExternoException.class)
+    ResponseEntity<ErrorResponseDTO> servicioExterno(ServicioExternoException ex, HttpServletRequest req) {
+        return error(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), req);
+    }
+
     @ExceptionHandler(Exception.class)
     ResponseEntity<ErrorResponseDTO> inesperado(Exception ex, HttpServletRequest req) {
         log.error("Error inesperado | ruta={}", req.getRequestURI(), ex);

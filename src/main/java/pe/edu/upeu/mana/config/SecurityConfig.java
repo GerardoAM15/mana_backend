@@ -60,6 +60,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/bebidas/**", "/api/v1/proveedores/**", "/api/v1/compras-bebidas/**", "/api/v1/stock-bebidas/**", "/api/v1/movimientos-stock/**").hasAuthority("INVENTARIO_GESTIONAR")
                         .requestMatchers("/api/v1/gastos/**").hasAuthority("GASTO_GESTIONAR")
                         .requestMatchers("/api/v1/reportes/**").hasAuthority("REPORTE_VER")
+                        // Autocompletado: DNI en clientes y usuarios, RUC en proveedores.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/consultas/dni/*").hasAnyAuthority("CLIENTE_ESCRIBIR", "USUARIO_GESTIONAR")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/consultas/ruc/*").hasAuthority("INVENTARIO_GESTIONAR")
                         .anyRequest().denyAll())
                 .addFilterBefore(new JwtAuthenticationFilter(jwt, detalles, usuarios, entry), UsernamePasswordAuthenticationFilter.class);
         return http.build();

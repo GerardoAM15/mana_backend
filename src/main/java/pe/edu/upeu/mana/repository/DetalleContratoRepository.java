@@ -7,6 +7,8 @@ import org.springframework.data.repository.query.Param;
 import pe.edu.upeu.mana.entity.*;
 
 public interface DetalleContratoRepository extends JpaRepository<DetalleContrato, Long> {
+    java.util.List<DetalleContrato> findByContratoIdInOrderById(java.util.Collection<Long> ids);
+
 
     java.util.List<DetalleContrato> findByContratoIdOrderById(Long contratoId);
 

@@ -54,9 +54,11 @@ class VentaServiceImplTest {
     @Mock PagoVentaRepository pagos;
     @Mock DevolucionVentaRepository devoluciones;
     @Mock DetalleOrdenRepository detalles;
+    @Mock DetalleComboPlatoRepository combos;
     @Mock VentaMapper mapper;
     @Mock ValidadorPagos validadorPagos;
     @Mock Clock clock;
+    @Mock ValidadorAtencion atencion;
 
     @InjectMocks
     VentaServiceImpl service;
@@ -67,6 +69,8 @@ class VentaServiceImplTest {
         caja.setLocalId(1L);
         when(cajas.buscarActualParaActualizar()).thenReturn(caja);
         var s = new Servicio();
+        when(clock.getZone()).thenReturn(ZoneId.of("America/Lima"));
+        when(clock.instant()).thenReturn(Instant.parse("2026-11-05T15:00:00Z"));
         when(servicios.findById("C")).thenReturn(Optional.of(s));
         var p = new Plato();
         p.setId(2L);
@@ -75,6 +79,20 @@ class VentaServiceImplTest {
         var ex = assertThrows(ReglaNegocioException.class, () -> service.crear(new VentaRequestDTO("C", false, null, List.of(new LineaVentaRequestDTO(TipoLineaVenta.PLATO, 1L, 2L, null, null, null)), null)));
         assertEquals("En la cena solo se vende el menú completo", ex.getMessage());
         verifyNoInteractions(ventas);
+    }
+
+    @Test void ventaEnFeriadoEsRechazadaAntesDeDescontarStock() {
+        var caja = new SesionCaja(); caja.setLocalId(1L);
+        when(cajas.buscarActualParaActualizar()).thenReturn(caja);
+        when(servicios.findById("A")).thenReturn(Optional.of(new Servicio()));
+        var reloj = Clock.fixed(Instant.parse("2026-11-05T15:00:00Z"),ZoneId.of("America/Lima"));
+        when(clock.getZone()).thenReturn(reloj.getZone()); when(clock.instant()).thenReturn(reloj.instant());
+        var cierres=mock(DiaNoAtencionRepository.class); var dias=mock(ServicioDiaAtencionRepository.class);
+        when(cierres.existsByLocalIdAndFecha(1L,LocalDate.now(reloj))).thenReturn(true);
+        doAnswer(i -> {new ValidadorAtencion(servicios,dias,cierres).validar(i.getArgument(0),i.getArgument(1),i.getArgument(2));return null;})
+                .when(atencion).validar(1L,LocalDate.now(reloj),"A");
+        assertThrows(ReglaNegocioException.class,()->service.crear(new VentaRequestDTO("A",false,null,List.of(),null)));
+        verifyNoInteractions(ventas,stocks);
     }
 
     @Test

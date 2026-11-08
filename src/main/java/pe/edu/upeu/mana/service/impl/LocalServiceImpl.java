@@ -33,7 +33,7 @@ public class LocalServiceImpl implements LocalService {
     @Transactional
     public LocalResponseDTO crear(LocalRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio LocalServiceImpl.crear");
+        log.debug("Inicio LocalServiceImpl.crear");
         try {
             var e = new Local();
             validar(e, r);
@@ -48,14 +48,14 @@ public class LocalServiceImpl implements LocalService {
             }
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin LocalServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin LocalServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public LocalResponseDTO actualizar(Long id, LocalRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio LocalServiceImpl.actualizar");
+        log.debug("Inicio LocalServiceImpl.actualizar");
         try {
             var e = obtener(id);
             validar(e, r);
@@ -63,40 +63,40 @@ public class LocalServiceImpl implements LocalService {
             repository.flush();
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin LocalServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin LocalServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public LocalResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio LocalServiceImpl.buscar");
+        log.debug("Inicio LocalServiceImpl.buscar");
         try {
             return mapper.toResponse(obtener(id));
         } finally {
-            log.info("Fin LocalServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin LocalServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<LocalResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio LocalServiceImpl.listar");
+        log.debug("Inicio LocalServiceImpl.listar");
         try {
             return repository.findAll(Sort.by("id")).stream().map(mapper::toResponse).toList();
         } finally {
-            log.info("Fin LocalServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin LocalServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio LocalServiceImpl.eliminar");
+        log.debug("Inicio LocalServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin LocalServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin LocalServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

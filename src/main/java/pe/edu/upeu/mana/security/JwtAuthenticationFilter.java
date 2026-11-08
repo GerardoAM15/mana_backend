@@ -45,6 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             var usuario = usuarios.findByCorreoIgnoreCase(claims.getSubject()).orElseThrow(() -> new BadCredentialsException("Token inválido"));
             if (!Boolean.TRUE.equals(usuario.getActivo()) || usuario.getTokenVersion() != ((Number) claims.get("tv")).longValue())
                 throw new BadCredentialsException("Token inválido");
+            req.setAttribute("mana.usuario:" + usuario.getCorreo(), usuario);
             var user = detalles.loadUserByUsername(usuario.getCorreo());
             if (!user.isEnabled())
                 throw new BadCredentialsException("Token inválido");

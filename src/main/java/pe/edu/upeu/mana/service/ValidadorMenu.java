@@ -35,21 +35,21 @@ public class ValidadorMenu {
     @Transactional(readOnly = true)
     public ReglaCobro obtenerRegla(String servicio) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ValidadorMenu.obtenerRegla");
+        log.debug("Inicio ValidadorMenu.obtenerRegla");
         try {
             var opciones = reglas.findByServicioAndActivoTrueOrderById(servicio);
             if (opciones.size() != 1)
                 throw new ReglaNegocioException("Debe existir una única regla activa para el servicio del pensionista");
             return opciones.getFirst();
         } finally {
-            log.info("Fin ValidadorMenu.obtenerRegla | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ValidadorMenu.obtenerRegla | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public Map<Long, Plato> validar(Long localId, LocalDate fecha, String servicio, ReglaCobro regla, List<PlatoCantidadRequestDTO> seleccion) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ValidadorMenu.validar");
+        log.debug("Inicio ValidadorMenu.validar");
         try {
             if (!regla.getServicio().equals(servicio) || !Boolean.TRUE.equals(regla.getActivo()))
                 throw new ReglaNegocioException("La regla no corresponde al servicio");
@@ -76,7 +76,7 @@ public class ValidadorMenu {
                 throw new ReglaNegocioException("La selección debe cumplir exactamente la composición del menú");
             return resultado;
         } finally {
-            log.info("Fin ValidadorMenu.validar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ValidadorMenu.validar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

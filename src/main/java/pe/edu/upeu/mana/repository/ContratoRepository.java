@@ -8,6 +8,8 @@ import pe.edu.upeu.mana.entity.*;
 import pe.edu.upeu.mana.enums.EstadoContrato;
 
 public interface ContratoRepository extends JpaRepository<Contrato, Long> {
+    boolean existsByAnteriorIdAndEstadoNot(Long anteriorId, pe.edu.upeu.mana.enums.EstadoContrato estado);
+
 
     @Query("select c.clienteId from Contrato c where c.id=:id")
     Optional<Long> buscarClienteId(@Param("id") Long id);

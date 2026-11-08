@@ -35,31 +35,31 @@ public class ReporteServiceImpl implements ReporteService {
     @Transactional(readOnly = true)
     public List<IngresoPeriodoResponseDTO> ingresos(LocalDate desde, LocalDate hasta, Long local) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReporteServiceImpl.ingresos");
+        log.debug("Inicio ReporteServiceImpl.ingresos");
         try {
             rango(desde, hasta);
             return reportes.ingresos(contexto.localId(local), desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay()).stream().map(r -> new IngresoPeriodoResponseDTO(r.getPeriodo(), dinero(r.getContratos()), dinero(r.getVentas()), dinero(r.getContratos().add(r.getVentas())))).toList();
         } finally {
-            log.info("Fin ReporteServiceImpl.ingresos | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReporteServiceImpl.ingresos | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<PlatoConsumidoResponseDTO> platos(LocalDate desde, LocalDate hasta, Long local, String servicio) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReporteServiceImpl.platos");
+        log.debug("Inicio ReporteServiceImpl.platos");
         try {
             rango(desde, hasta);
             return reportes.platos(contexto.localId(local), desde, hasta, servicio);
         } finally {
-            log.info("Fin ReporteServiceImpl.platos | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReporteServiceImpl.platos | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<ContratoPorVencerResponseDTO> porVencer(Integer dias, LocalDate desde, LocalDate hasta, Long local) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReporteServiceImpl.porVencer");
+        log.debug("Inicio ReporteServiceImpl.porVencer");
         try {
             if (dias < 0 || dias > 366)
                 throw new DatosInvalidosException("Los días deben estar entre 0 y 366");
@@ -75,26 +75,26 @@ public class ReporteServiceImpl implements ReporteService {
                 return List.of();
             return reportes.porVencer(localId, hoy, inicio, fin);
         } finally {
-            log.info("Fin ReporteServiceImpl.porVencer | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReporteServiceImpl.porVencer | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<AsistenciaDiariaResponseDTO> asistencia(LocalDate desde, LocalDate hasta, Long local) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReporteServiceImpl.asistencia");
+        log.debug("Inicio ReporteServiceImpl.asistencia");
         try {
             rango(desde, hasta);
             return reportes.asistencia(contexto.localId(local), desde, hasta);
         } finally {
-            log.info("Fin ReporteServiceImpl.asistencia | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReporteServiceImpl.asistencia | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<GastoIngresoResponseDTO> gastos(LocalDate desde, LocalDate hasta, Long local, String agrupacion) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ReporteServiceImpl.gastos");
+        log.debug("Inicio ReporteServiceImpl.gastos");
         try {
             rango(desde, hasta);
             String formato = switch(agrupacion) {
@@ -107,7 +107,7 @@ public class ReporteServiceImpl implements ReporteService {
             };
             return reportes.gastos(contexto.localId(local), desde.atStartOfDay(), hasta.plusDays(1).atStartOfDay(), formato).stream().map(r -> new GastoIngresoResponseDTO(r.getPeriodo(), dinero(r.getIngresos()), dinero(r.getGastos()), dinero(r.getIngresos().subtract(r.getGastos())))).toList();
         } finally {
-            log.info("Fin ReporteServiceImpl.gastos | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ReporteServiceImpl.gastos | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

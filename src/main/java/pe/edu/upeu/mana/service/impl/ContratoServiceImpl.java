@@ -101,11 +101,11 @@ public class ContratoServiceImpl implements ContratoService {
     @Transactional(readOnly = true)
     public SimulacionContratoResponseDTO simular(SimularContratoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.simular");
+        log.debug("Inicio ContratoServiceImpl.simular");
         try {
             return calcular(r, contexto.localId(null));
         } finally {
-            log.info("Fin ContratoServiceImpl.simular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.simular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -150,13 +150,13 @@ public class ContratoServiceImpl implements ContratoService {
     @Transactional
     public ContratoResponseDTO crear(ContratoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.crear");
+        log.debug("Inicio ContratoServiceImpl.crear");
         try {
             var caja = cajas.buscarActualParaActualizar();
             clientes.buscarParaActualizar(r.getClienteId()).orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
             return registrar(r, caja, null);
         } finally {
-            log.info("Fin ContratoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -193,7 +193,7 @@ public class ContratoServiceImpl implements ContratoService {
     @Transactional
     public ContratoResponseDTO renovar(Long id, RenovarContratoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.renovar");
+        log.debug("Inicio ContratoServiceImpl.renovar");
         try {
             var caja = cajas.buscarActualParaActualizar();
             Long clienteId = contratos.buscarClienteId(id).orElseThrow(() -> new RecursoNoEncontradoException("Contrato no encontrado"));
@@ -207,19 +207,21 @@ public class ContratoServiceImpl implements ContratoService {
                 throw new ReglaNegocioException("Solo puede renovar un contrato activo");
             if (hoy.isBefore(anterior.getFechaFin().minusDays(3)))
                 throw new ReglaNegocioException("Solo puede renovar dentro de los últimos 3 días del contrato");
+            if (contratos.existsByAnteriorIdAndEstadoNot(id, EstadoContrato.ANULADO))
+                throw new ReglaNegocioException("El contrato ya tiene una renovación vigente");
             LocalDate inicio = anterior.getFechaFin().plusDays(1);
             if (inicio.isBefore(hoy))
                 inicio = hoy;
             return registrar(new ContratoRequestDTO(clienteId, r.getPlanId(), inicio, r.getServicios(), r.getPagos()), caja, id);
         } finally {
-            log.info("Fin ContratoServiceImpl.renovar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.renovar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public ContratoResponseDTO anular(Long id, AnularRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.anular");
+        log.debug("Inicio ContratoServiceImpl.anular");
         try {
             String motivo = validarMotivo(r);
             var caja = cajas.buscarActualParaActualizar();
@@ -246,7 +248,7 @@ public class ContratoServiceImpl implements ContratoService {
             log.info("Contrato anulado | numero={} | usuario={} | devolucion={}", c.getNumero(), contexto.usuario().getCorreo(), c.getMontoTotal());
             return respuesta(c);
         } finally {
-            log.info("Fin ContratoServiceImpl.anular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.anular | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
@@ -272,64 +274,68 @@ public class ContratoServiceImpl implements ContratoService {
     @Transactional(readOnly = true)
     public ContratoResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.buscar");
+        log.debug("Inicio ContratoServiceImpl.buscar");
         try {
             var c = obtener(id);
             contexto.validarLocal(c.getLocalId());
             return respuesta(c);
         } finally {
-            log.info("Fin ContratoServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PaginaResponseDTO<ContratoResponseDTO> listar(String dni, EstadoContrato estado, LocalDate desde, LocalDate hasta, Long localId, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.listar");
+        log.debug("Inicio ContratoServiceImpl.listar");
         try {
             var pageable = PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
             if (desde != null && hasta != null && desde.isAfter(hasta))
                 throw new DatosInvalidosException("Rango de fechas inválido");
-            return PaginaResponseDTO.de(contratos.filtrar(contexto.localId(localId), dni == null || dni.isBlank() ? null : dni.trim(), desde, hasta, pageable, estado == null ? null : estado.name(), java.time.LocalDate.now(clock)).map(this::respuesta));
+            var paginaContratos = contratos.filtrar(contexto.localId(localId), dni == null || dni.isBlank() ? null : dni.trim(), desde, hasta, pageable, estado == null ? null : estado.name(), LocalDate.now(clock));
+            var clienteMap = clientes.findAllById(paginaContratos.stream().map(Contrato::getClienteId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(Cliente::getId, c -> c));
+            var planMap = planes.findAllById(paginaContratos.stream().map(Contrato::getPlanId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(TipoPlan::getId, p -> p));
+            var detalleMap = detalles.findByContratoIdInOrderById(paginaContratos.stream().map(Contrato::getId).toList()).stream().collect(Collectors.groupingBy(DetalleContrato::getContratoId));
+            return PaginaResponseDTO.de(paginaContratos.map(c -> mapper.toResponse(c, clienteMap.get(c.getClienteId()), planMap.get(c.getPlanId()), detalleMap.getOrDefault(c.getId(), List.of()), List.of(), List.of())));
         } finally {
-            log.info("Fin ContratoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public ContratoResponseDTO buscarVigente(Long clienteId, Long localId) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.buscarVigente");
+        log.debug("Inicio ContratoServiceImpl.buscarVigente");
         try {
             if (!clientes.existsById(clienteId))
                 throw new RecursoNoEncontradoException("Cliente no encontrado");
             return respuesta(contratos.buscarVigente(clienteId, contexto.localId(localId), LocalDate.now(clock)).orElseThrow(() -> new RecursoNoEncontradoException("El cliente no tiene un contrato vigente en el local")));
         } finally {
-            log.info("Fin ContratoServiceImpl.buscarVigente | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.buscarVigente | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<PensionistaResponseDTO> buscarPensionistas(String q, Long localId) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.buscarPensionistas");
+        log.debug("Inicio ContratoServiceImpl.buscarPensionistas");
         try {
             if (q == null || q.isBlank())
                 throw new DatosInvalidosException("Escriba el DNI o nombre para buscar");
             String texto = "%" + q.trim().toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
-            return contratos.buscarPensionistas(contexto.localId(localId), LocalDate.now(clock), texto).stream().map(c -> {
-                var p = clientes.findById(c.getClienteId()).orElseThrow(() -> new RecursoNoEncontradoException("Cliente no encontrado"));
-                return mapper.toPensionista(c, p, detalles.findByContratoIdOrderById(c.getId()));
-            }).toList();
+            var encontrados = contratos.buscarPensionistas(contexto.localId(localId), LocalDate.now(clock), texto);
+            var clienteMap = clientes.findAllById(encontrados.stream().map(Contrato::getClienteId).collect(Collectors.toSet())).stream().collect(Collectors.toMap(Cliente::getId, c -> c));
+            var detalleMap = detalles.findByContratoIdInOrderById(encontrados.stream().map(Contrato::getId).toList()).stream().collect(Collectors.groupingBy(DetalleContrato::getContratoId));
+            return encontrados.stream().map(c -> mapper.toPensionista(c, clienteMap.get(c.getClienteId()), detalleMap.getOrDefault(c.getId(), List.of()))).toList();
         } finally {
-            log.info("Fin ContratoServiceImpl.buscarPensionistas | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.buscarPensionistas | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void actualizarEstados() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ContratoServiceImpl.actualizarEstados");
+        log.debug("Inicio ContratoServiceImpl.actualizarEstados");
         try {
             LocalDate hoy = LocalDate.now(clock);
             var ahora = OffsetDateTime.now(clock);
@@ -338,7 +344,7 @@ public class ContratoServiceImpl implements ContratoService {
             if (finalizados + activados > 0)
                 log.info("Estados de contratos actualizados | finalizados={} | activados={}", finalizados, activados);
         } finally {
-            log.info("Fin ContratoServiceImpl.actualizarEstados | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ContratoServiceImpl.actualizarEstados | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

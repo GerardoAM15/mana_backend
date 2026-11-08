@@ -37,7 +37,7 @@ public class ClienteServiceImpl implements ClienteService {
     @Transactional
     public ClienteResponseDTO crear(ClienteRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ClienteServiceImpl.crear");
+        log.debug("Inicio ClienteServiceImpl.crear");
         try {
             var e = new Cliente();
             validar(e, r);
@@ -45,14 +45,14 @@ public class ClienteServiceImpl implements ClienteService {
             repository.saveAndFlush(e);
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin ClienteServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ClienteServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public ClienteResponseDTO actualizar(Long id, ClienteRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ClienteServiceImpl.actualizar");
+        log.debug("Inicio ClienteServiceImpl.actualizar");
         try {
             var e = obtener(id);
             validar(e, r);
@@ -60,25 +60,25 @@ public class ClienteServiceImpl implements ClienteService {
             repository.flush();
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin ClienteServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ClienteServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public ClienteResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ClienteServiceImpl.buscar");
+        log.debug("Inicio ClienteServiceImpl.buscar");
         try {
             return mapper.toResponse(obtener(id));
         } finally {
-            log.info("Fin ClienteServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ClienteServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PaginaResponseDTO<ClienteResponseDTO> listar(String q, int pagina, int tamanio, String ordenarPor, String direccion) {
         long inicio = System.nanoTime();
-        log.info("Inicio ClienteServiceImpl.listar");
+        log.debug("Inicio ClienteServiceImpl.listar");
         try {
             var pageable = PaginacionUtil.construir(pagina, tamanio, ordenarPor, direccion, CAMPOS_ORDENABLES, "id");
             if (q == null || q.isBlank())
@@ -87,18 +87,18 @@ public class ClienteServiceImpl implements ClienteService {
             String texto = "%" + busqueda.toLowerCase(Locale.ROOT).replace("!", "!!").replace("%", "!%").replace("_", "!_") + "%";
             return PaginaResponseDTO.de(repository.filtrar(busqueda, texto, pageable).map(mapper::toResponse));
         } finally {
-            log.info("Fin ClienteServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
+            log.debug("Fin ClienteServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicio) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ClienteServiceImpl.eliminar");
+        log.debug("Inicio ClienteServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin ClienteServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ClienteServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

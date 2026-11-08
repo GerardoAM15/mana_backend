@@ -32,7 +32,7 @@ public class PlatoServiceImpl implements PlatoService {
     @Transactional
     public PlatoResponseDTO crear(PlatoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlatoServiceImpl.crear");
+        log.debug("Inicio PlatoServiceImpl.crear");
         try {
             var e = new Plato();
             validar(e, r);
@@ -40,14 +40,14 @@ public class PlatoServiceImpl implements PlatoService {
             repository.saveAndFlush(e);
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin PlatoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlatoServiceImpl.crear | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public PlatoResponseDTO actualizar(Long id, PlatoRequestDTO r) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlatoServiceImpl.actualizar");
+        log.debug("Inicio PlatoServiceImpl.actualizar");
         try {
             var e = obtener(id);
             validar(e, r);
@@ -55,40 +55,40 @@ public class PlatoServiceImpl implements PlatoService {
             repository.flush();
             return mapper.toResponse(e);
         } finally {
-            log.info("Fin PlatoServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlatoServiceImpl.actualizar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public PlatoResponseDTO buscar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlatoServiceImpl.buscar");
+        log.debug("Inicio PlatoServiceImpl.buscar");
         try {
             return mapper.toResponse(obtener(id));
         } finally {
-            log.info("Fin PlatoServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlatoServiceImpl.buscar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional(readOnly = true)
     public List<PlatoResponseDTO> listar() {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlatoServiceImpl.listar");
+        log.debug("Inicio PlatoServiceImpl.listar");
         try {
             return repository.findAll(Sort.by("id")).stream().map(mapper::toResponse).toList();
         } finally {
-            log.info("Fin PlatoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlatoServiceImpl.listar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 
     @Transactional
     public void eliminar(Long id) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio PlatoServiceImpl.eliminar");
+        log.debug("Inicio PlatoServiceImpl.eliminar");
         try {
             obtener(id).setActivo(false);
         } finally {
-            log.info("Fin PlatoServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin PlatoServiceImpl.eliminar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 

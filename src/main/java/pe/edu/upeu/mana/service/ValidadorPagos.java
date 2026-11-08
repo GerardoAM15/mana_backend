@@ -22,7 +22,7 @@ public class ValidadorPagos {
     @Transactional(readOnly = true)
     public void validar(List<PagoRequestDTO> pagos, BigDecimal total) {
         long inicioOperacion = System.nanoTime();
-        log.info("Inicio ValidadorPagos.validar");
+        log.debug("Inicio ValidadorPagos.validar");
         try {
             if (pagos == null || pagos.isEmpty())
                 throw new DatosInvalidosException("Los pagos son obligatorios");
@@ -37,7 +37,7 @@ public class ValidadorPagos {
             if (suma.compareTo(total) != 0)
                 throw new ReglaNegocioException("La suma de los pagos debe ser igual al total");
         } finally {
-            log.info("Fin ValidadorPagos.validar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
+            log.debug("Fin ValidadorPagos.validar | duracionMs={}", (System.nanoTime() - inicioOperacion) / 1_000_000);
         }
     }
 }

@@ -155,7 +155,9 @@ class ContratoServiceImplTest {
     }
 
     @Test
-    void renovacionEnElLimiteCreaUnContratoSinTrasladarSaldo() {
+    void renovacionTrasAnularLaAnteriorCreaUnContratoSinTrasladarSaldo() {
+        // Una renovación ANULADO no satisface la búsqueda de renovaciones vigentes.
+        when(contratos.existsByAnteriorIdAndEstadoNot(10L, EstadoContrato.ANULADO)).thenReturn(false);
         service = crearServicio(Clock.fixed(Instant.parse("2026-11-05T15:00:00Z"), ZoneId.of("America/Lima")));
         contratoBase();
         when(clientes.findById(1L)).thenReturn(Optional.of(cliente));
@@ -181,9 +183,10 @@ class ContratoServiceImplTest {
         t.setPrecio(new BigDecimal("3.20"));
         when(tarifas.findByServicioAndActivoTrue("D")).thenReturn(Optional.of(t));
         when(correlativos.siguiente(1L, TipoCorrelativo.CONTRATO)).thenReturn("C-000002");
+        var siguienteId = new java.util.concurrent.atomic.AtomicLong(11L);
         when(contratos.saveAndFlush(any())).thenAnswer(i -> {
             Contrato c = i.getArgument(0);
-            c.setId(11L);
+            c.setId(siguienteId.getAndIncrement());
             return c;
         });
         var u = new Usuario();
@@ -198,6 +201,15 @@ class ContratoServiceImplTest {
         assertEquals(EstadoContrato.ACTIVO, anterior.getEstado());
         verify(detalles).save(argThat(d -> d.getSaldoRaciones() == 5 && d.getRacionesContratadas() == 5 && d.getPrecioRacionPactado().equals(new BigDecimal("3.20"))));
         verify(validador).validar(argThat(p -> p.size()==1 && p.getFirst().getMetodo().equals("YAPE") && p.getFirst().getMonto().compareTo(new BigDecimal("16.00"))==0), eq(new BigDecimal("16.00")));
+        var renovado = captor.getValue();
+        when(contratos.buscarClienteId(11L)).thenReturn(Optional.of(1L));
+        when(contratos.buscarParaActualizar(11L)).thenReturn(Optional.of(renovado));
+        service.anular(11L,new AnularRequestDTO("Renovación equivocada"));
+        assertEquals(EstadoContrato.ANULADO,renovado.getEstado());
+        when(contratos.existsByAnteriorIdAndEstadoNot(10L,EstadoContrato.ANULADO)).thenAnswer(i -> renovado.getEstado()!=EstadoContrato.ANULADO);
+        service.renovar(10L,new RenovarContratoRequestDTO(2L,List.of("D"),pagos()));
+        verify(contratos,times(2)).saveAndFlush(captor.capture());
+        assertEquals(12L,captor.getValue().getId()); assertEquals(10L,captor.getValue().getAnteriorId());
     }
 
     @Test
@@ -220,6 +232,14 @@ class ContratoServiceImplTest {
         assertThrows(ReglaNegocioException.class, () -> service.anular(10L, new AnularRequestDTO("Motivo de anulación")));
         assertEquals(EstadoContrato.ACTIVO, anterior.getEstado());
         verify(pagos, never()).save(any());
+    }
+
+    @Test void renovacionDuplicadaSeRechazaConElMensajeDeConflicto() {
+        service = crearServicio(Clock.fixed(Instant.parse("2026-11-05T15:00:00Z"), ZoneId.of("America/Lima")));
+        contratoBase();
+        when(contratos.existsByAnteriorIdAndEstadoNot(10L, EstadoContrato.ANULADO)).thenReturn(true);
+        var ex=assertThrows(ReglaNegocioException.class,()->service.renovar(10L,new RenovarContratoRequestDTO(2L,List.of("D"),pagos())));
+        assertEquals("El contrato ya tiene una renovación vigente",ex.getMessage()); verify(contratos,never()).saveAndFlush(any());
     }
 
     private List<PagoRequestDTO> pagos() {

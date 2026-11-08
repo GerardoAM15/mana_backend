@@ -40,9 +40,17 @@ Perfil predeterminado: `dev`. Oracle: `jdbc:oracle:thin:@//localhost:1521/xepdb1
 | `SPRING_MAIL_USERNAME`, `SPRING_MAIL_PASSWORD` | Credenciales SMTP | Sin valores |
 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH` | Autenticación SMTP | Según el servidor |
 | `SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE` | TLS SMTP | Según el servidor |
+| `APISPERU_TOKEN` | Token de APIsPERU para autocompletar DNI/RUC | Sin token: la consulta responde 503 y se escribe a mano |
+| `APISPERU_URL` | Base de la API DNI/RUC | `https://dniruc.apisperu.com/api/v1` |
 | `MANA_ORACLE_TEST` | Habilita los tests de integración reales | Ausente: se omiten |
 
 `prod` exige credenciales de BD y JWT por entorno y no importa el archivo local del perfil `dev`. Para personalizar SMTP también pueden proporcionarse las propiedades estándar de Spring Mail mediante configuración externa. En desarrollo sin SMTP, la recuperación escribe el enlace en el log, según el requisito del proyecto; en los demás perfiles no escribe el token.
+
+## Servicios externos
+
+**Correo con Gmail (RF40).** `application-local.example.yaml` trae el bloque `spring.mail` listo para `smtp.gmail.com:587` con STARTTLS. En la cuenta Gmail active la verificación en 2 pasos y genere una *contraseña de aplicación* (Cuenta de Google > Seguridad > Contraseñas de aplicaciones); úsela en `GMAIL_CLAVE_APP` y el correo en `GMAIL_USUARIO`. El remitente es esa misma cuenta. Un fallo de envío se registra en el log sin cambiar la respuesta de `/auth/recuperar`.
+
+**Consulta DNI/RUC (APIsPERU).** `GET /api/v1/consultas/dni/{dni}` (permiso `CLIENTE_ESCRIBIR` o `USUARIO_GESTIONAR`) devuelve nombre y apellido; si la persona ya existe en MANÁ responde desde la BD con `registrado=true` sin gastar consulta. `GET /api/v1/consultas/ruc/{ruc}` (`INVENTARIO_GESTIONAR`) devuelve razón social, dirección, teléfono, estado y condición de SUNAT. El token solo vive en el backend y no se escribe en el log; las respuestas se guardan 12 horas en memoria y cada usuario puede hacer 30 consultas por minuto (429 al exceder). Respuestas: 400 formato inválido, 404 no encontrado, 503 API sin token, caída o lenta (3 s para conectar, 5 s de lectura). El registro nunca depende de la API: el formulario se completa a mano.
 
 ## Primer dueño y autenticación
 
