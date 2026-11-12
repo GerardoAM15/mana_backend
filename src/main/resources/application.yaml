@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: mana-backend
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: America/Lima
+  flyway:
+    enabled: false
+server:
+  port: ${SERVER_PORT:8080}
+app:
+  facturacion:
+    habilitada: ${FACTURACION_HABILITADA:false}
+    ambiente: ${FACTURACION_AMBIENTE:BETA}
+    url: ${FACTURACION_URL:https://facturacion.apisperu.com/api/v1}
+    token: ${FACTURACION_TOKEN:}
+    company-id: ${FACTURACION_COMPANY_ID:}
+    igv-porcentaje: ${FACTURACION_IGV:18.00}
+    boleta-monto-identificacion: ${FACTURACION_BOLETA_MONTO_IDENTIFICACION:700.00}
+    empresa:
+      ruc: ${FACTURACION_EMPRESA_RUC:}
+      razon-social: ${FACTURACION_EMPRESA_RAZON_SOCIAL:}
+      nombre-comercial: ${FACTURACION_EMPRESA_NOMBRE_COMERCIAL:}
+      direccion: ${FACTURACION_EMPRESA_DIRECCION:}
+      ubigeo: ${FACTURACION_EMPRESA_UBIGEO:}
+      departamento: ${FACTURACION_EMPRESA_DEPARTAMENTO:}
+      provincia: ${FACTURACION_EMPRESA_PROVINCIA:}
+      distrito: ${FACTURACION_EMPRESA_DISTRITO:}
+      cod-local: ${FACTURACION_EMPRESA_COD_LOCAL:0000}
+  zona-horaria: America/Lima
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:4200}
+  # Consulta DNI/RUC (APIsPERU). Sin token, el autocompletado responde 503
+  # y los formularios se llenan a mano.
+  apisperu:
+    url: ${APISPERU_URL:https://dniruc.apisperu.com/api/v1}
+    token: ${APISPERU_TOKEN:}
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+logging:
+  level:
+    pe.edu.upeu.mana: INFO
