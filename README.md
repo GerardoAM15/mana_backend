@@ -85,9 +85,9 @@ El login devuelve `token`, `tipo`, `expiraEnSegundos`, `usuarioId`, `nombreCompl
 
 ## Permisos
 
-Jerarquía: **DUENO > ADMINISTRADOR > CAJERO**. El dueño tiene todos los permisos; el administrador tiene todos excepto `LOCAL_GESTIONAR`.
+Jerarquía: **Dueño > Administrador > Cajero** (códigos de rol `DUENO`, `ADMINISTRADOR` y `CAJERO`). El dueño tiene todos los permisos; el administrador tiene todos excepto `LOCAL_GESTIONAR`.
 
-| Permiso | DUENO | ADMINISTRADOR | CAJERO |
+| Permiso | Dueño | Administrador | Cajero |
 |---|:---:|:---:|:---:|
 | USUARIO_GESTIONAR | ✓ | ✓ | |
 | LOCAL_GESTIONAR | ✓ | | |
@@ -110,9 +110,9 @@ Jerarquía: **DUENO > ADMINISTRADOR > CAJERO**. El dueño tiene todos los permis
 | GASTO_GESTIONAR | ✓ | ✓ | |
 | REPORTE_VER | ✓ | ✓ | |
 
-La identidad determina el local operativo a partir del empleado. Los filtros `localId` de otras sedes se permiten a `DUENO` y `ADMINISTRADOR`. Las lecturas, reportes y escrituras comprueban ese alcance. El propietario de la caja, un `ADMINISTRADOR` o un `DUENO` pueden cerrarla; los dos últimos también pueden cobrar y anular ventas de otras cajas.
+La identidad determina el local operativo a partir del empleado. Los filtros `localId` de otras sedes se permiten al dueño y al administrador. Las lecturas, reportes y escrituras comprueban ese alcance. Quien abrió la caja, un administrador o un dueño pueden cerrarla; los dos últimos también pueden cobrar y anular ventas de otras cajas.
 
-Un `ADMINISTRADOR` solo crea, edita, desactiva y cambia el rol de usuarios `CAJERO`, y únicamente puede asignar `CAJERO`. Un `DUENO` gestiona todos los roles. Una operación fuera de esa jerarquía devuelve 403: `No tiene permiso para gestionar este usuario`. `UsuarioResponseDTO.gestionable` indica si la jerarquía permite editar al usuario; un dueño puede editar su propio perfil, pero nadie puede cambiarse el rol ni desactivarse a sí mismo. El frontend debe mantener esas dos acciones deshabilitadas para la propia cuenta.
+Un `ADMINISTRADOR` solo crea, edita, desactiva y cambia el rol de usuarios `CAJERO`, y únicamente puede asignar `CAJERO`. Un dueño gestiona todos los roles. Una operación fuera de esa jerarquía devuelve 403: `No tiene permiso para gestionar este usuario`. `UsuarioResponseDTO.gestionable` indica si la jerarquía permite editar al usuario; un dueño puede editar su propio perfil, pero nadie puede cambiarse el rol ni desactivarse a sí mismo. El frontend debe mantener esas dos acciones deshabilitadas para la propia cuenta.
 
 Desactivar al último dueño activo o quitarle el rol `DUENO`, tanto por edición como por los endpoints específicos, devuelve 409: `Debe existir al menos un dueño activo`. Esta protección tiene prioridad si también se trata de la propia cuenta. Las operaciones de gestión y el bootstrap comparten un bloqueo del rol `DUENO` antes de bloquear al usuario, para que dos peticiones concurrentes no eliminen al último dueño.
 
@@ -166,7 +166,7 @@ Página, tamaño, dirección o campo de ordenación fuera de la lista permitida 
 - Toda tarifa, precio de combo, suelto y bebida se lee de la BD. D: líquido + dos panes; A: entrada + segundo + refresco; C: segundo + refresco, según `componentes_regla`. Para consumos debe existir una regla activa inequívoca por servicio.
 - Al crear, actualizar o activar una regla de cobro se permite como máximo un menú activo por servicio. Un conflicto devuelve 409: `Ya existe un menú activo para ese servicio; desactívelo primero`. Las reglas inactivas pueden coexistir y editar la propia regla activa no se considera duplicado.
 - Una línea COMBO describe la composición de una unidad; su `cantidad` multiplica esa elección. Las bebidas de inventario no llevan recargo. Platos y combos deben estar programados hoy. Las bebidas descuentan stock al registrar, aun si la venta está pendiente.
-- Cobrar exige venta pendiente, caja original abierta y pagos por el total exacto. Cobrar y anular solo se permiten al propietario de esa caja, a un ADMINISTRADOR o a un DUENO; otro usuario recibe 403. Anular repone bebidas y devuelve cada pago si la venta estaba pagada.
+- Cobrar exige venta pendiente, caja original abierta y pagos por el total exacto. Cobrar y anular solo se permiten al propietario de esa caja, a un administrador o a un dueño; otro usuario recibe 403. Anular repone bebidas y devuelve cada pago si la venta estaba pagada.
 - Una caja abierta por usuario. El cierre rechaza ventas pendientes y guarda arqueo por método, incluso cuando los movimientos suman cero. Métodos omitidos en `conteos` equivalen a contado cero; los repetidos se rechazan.
 - **Esperado** = monto inicial solo en EFECTIVO + cobros de ventas − devoluciones de ventas + cobros de contratos − devoluciones de contratos + recargos de consumos no anulados. El esperado puede ser negativo, tanto por método como en total; el contado nunca es negativo. `diferencia = contado − esperado`.
 - **Devoluciones en EFECTIVO de contratos o ventas**: el efectivo esperado actual, incluido el monto inicial, debe cubrir el total a devolver. Si no, 409: `No hay efectivo suficiente en caja para la devolución`. No hay límite equivalente para otros métodos.
@@ -319,8 +319,8 @@ Prefijo `/api/v1/comprobantes`. Todos devuelven DTO salvo PDF y XML.
 | POST | `/ventas/{ventaId}` | Emitir para venta pagada; cuerpo directo con los campos del bloque `comprobante` |
 | POST | `/contratos/{contratoId}` | Emitir para contrato; mismo cuerpo |
 
-`COMPROBANTE_VER` y `COMPROBANTE_EMITIR`: DUENO, ADMINISTRADOR y CAJERO.
-`COMPROBANTE_GESTIONAR`: DUENO y ADMINISTRADOR, para reenviar y listar todos los
+`COMPROBANTE_VER` y `COMPROBANTE_EMITIR`: dueño, administrador y cajero.
+`COMPROBANTE_GESTIONAR`: dueño y administrador, para reenviar y listar todos los
 locales sin filtro. El cajero ve y emite solo en su local. Se aplica
 `ContextoLocalService`. El DTO incluye los datos para que el frontend arme el QR:
 `rucEmisor`, `tipoSunat`, serie, número, IGV, total, fecha, documento receptor y hash.
