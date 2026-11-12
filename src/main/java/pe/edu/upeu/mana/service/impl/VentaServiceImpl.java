@@ -312,7 +312,7 @@ public class VentaServiceImpl implements VentaService {
         var caja = cajas.buscarAbiertaParaActualizar(cajaId);
         var usuario = contexto.usuario();
         if (!Objects.equals(caja.getUsuarioId(), usuario.getId()) && !PermisosPorRol.esAdministradorODueno(usuario.getRol()))
-            throw new AccessDeniedException("Solo el dueño de la caja, un administrador o un DUENO puede operar la venta");
+            throw new AccessDeniedException("Solo quien abrió la caja, un administrador o un dueño puede operar la venta");
     }
 
     @Transactional(readOnly = true)

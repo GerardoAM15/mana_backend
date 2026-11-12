@@ -131,7 +131,7 @@ public class CajaServiceImpl implements CajaService {
             contexto.validarLocal(caja.getLocalId());
             var usuario = contexto.usuario();
             if (!caja.getUsuarioId().equals(usuario.getId()) && !PermisosPorRol.esAdministradorODueno(usuario.getRol()))
-                throw new AccessDeniedException("Solo el dueño de la caja, un administrador o un DUENO puede cerrarla");
+                throw new AccessDeniedException("Solo quien abrió la caja, un administrador o un dueño puede cerrarla");
             exigirAbierta(caja);
             if (ventas.existsByCajaIdAndEstado(id, pe.edu.upeu.mana.enums.EstadoVenta.PENDIENTE))
                 throw new ReglaNegocioException("No se puede cerrar la caja con ventas pendientes");
