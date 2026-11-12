@@ -1,0 +1,11 @@
+target/
+.m2/
+.idea/
+*.iml
+.env
+.env.*
+!.env.example
+*.log
+application-local.yaml
+# Proyectos de referencia solo para consulta
+referencia/
