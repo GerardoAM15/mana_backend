@@ -20,7 +20,7 @@ Los casos de uso siguen la numeración de la Matriz de Requerimientos v8.
 
 ## Ejecutar
 
-La raíz Maven es esta carpeta, `mana_backend/`, dentro del directorio abierto en IntelliJ. El esquema debe existir previamente y corresponder a [docs/mana-hibrido-v2.sql](docs/mana-hibrido-v2.sql). La aplicación **solo valida** el esquema: no ejecuta ese script, ALTER, migraciones ni DDL. Flyway está deshabilitado y no tiene dependencia.
+La raíz Maven es esta carpeta, `mana_backend/`, dentro del directorio abierto en IntelliJ. El esquema debe existir previamente y corresponder a [docs/mana-hibrido-v4.sql](docs/mana-hibrido-v4.sql) más [docs/mana-v5-comprobantes.sql](docs/mana-v5-comprobantes.sql) y [docs/mana-v6-comprobante-correo.sql](docs/mana-v6-comprobante-correo.sql). La aplicación **solo valida** el esquema: no ejecuta ese script, ALTER, migraciones ni DDL. Flyway está deshabilitado y no tiene dependencia.
 
 ```powershell
 # Desde esta carpeta, con JDK 21 configurado
@@ -118,7 +118,7 @@ Desactivar al último dueño activo o quitarle el rol `DUENO`, tanto por edició
 
 ## Arquitectura vigente
 
-La referencia es **`../referencia/pharmasoft/`**, fuera del build. Tiene prioridad sobre AutoAndes. Se conservan las reglas de negocio de [docs/prompt-backend-mana.md](docs/prompt-backend-mana.md) y el esquema actualizado; no se incorpora Flyway.
+La referencia es **`../referencia/pharmasoft/`**, fuera del build. Tiene prioridad sobre AutoAndes. Se conservan las reglas de negocio de la Matriz de Requerimientos y el esquema actualizado; no se incorpora Flyway.
 
 - `enums/`: todos los enums, incluido `Permiso`; cualquier enum nuevo debe ir aquí.
 - `entity/`, `repository/`, `mapper/`: persistencia y conversión manual a DTOs, sin MapStruct ni entidades devueltas por controladores.
